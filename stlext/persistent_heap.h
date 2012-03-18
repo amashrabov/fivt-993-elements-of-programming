@@ -6,9 +6,7 @@
 #include <memory>
 #include <iostream>
 
-namespace stlext{
-
-
+namespace stlext {
 
 template<class T>
 struct node {
@@ -16,35 +14,53 @@ struct node {
   typedef std::shared_ptr<node<T> > node_ptr;
   typedef std::shared_ptr<const node<T> > const_node_ptr;
 
-  ~node(){
+
+  /*
+  class const_node_ptr : public std::shared_ptr<node<T> > {
+
+    void clone(){
+      this->reset(new node<T> >(*this));
+    }
+
+    void leaf_node(T value){
+      this->reset(new node<T> >(value));
+    }
+
+  };
+  */
+
+  ~node() {
     //std::cout << "delete node value =" << value_ << std::endl;
   }
 
-  explicit node(T value)
-    : value_(value) {
+  explicit node(const T &value) :
+      value_(value) {
     //std::cout << "new node value =" << value_ << std::endl;
   }
 
-  node(T value, const_node_ptr left, const_node_ptr right)
-    : value_(value) {
+  /*
+  node(T value, const_node_ptr left, const_node_ptr right) :
+      value_(value) {
     child_[0] = left;
     child_[1] = right;
     //std::cout << "new node value =" << value_ << std::endl;
   }
+  */
 
-  explicit node(const_node_ptr base_node)
-    : value_(base_node->value_) {
+  explicit node(const_node_ptr base_node) :
+      value_(base_node->value_) {
     child_[0] = base_node->child_[0];
     child_[1] = base_node->child_[1];
     //std::cout << "new node value =" << value_ << std::endl;
   }
 
-  node(const_node_ptr base_node, T value)
-    : value_(value){
+  node(const_node_ptr base_node, const T &value) :
+      value_(value) {
     child_[0] = base_node->child_[0];
     child_[1] = base_node->child_[1];
     //std::cout << "new node value =" << value_ << std::endl;
   }
+
 
   T value_;
 
@@ -52,27 +68,29 @@ struct node {
 
  private:
 
-
 };
+
+
 
 template<class T, class Comparator = std::less<T> >
 class persistent_heap {
 
  public:
 
-  typedef std::shared_ptr<node<T> > node_ptr;
-  typedef std::shared_ptr<const node<T> > const_node_ptr;
+  typedef typename node<T>::node_ptr node_ptr;
+  typedef typename node<T>::const_node_ptr const_node_ptr;
 
-  persistent_heap()
-    : root_(NULL), size_(0), top_size_(0) {
+  persistent_heap() :
+      root_(NULL), size_(0), top_size_(0) {
   }
 
-  persistent_heap(const persistent_heap<T, Comparator> &base_heap)
-    : root_(base_heap.root_), size_(base_heap.size_),
+  persistent_heap(const persistent_heap<T, Comparator> &base_heap) :
+      root_(base_heap.root_),
+      size_(base_heap.size_),
       top_size_(base_heap.top_size_) {
   }
 
-  void operator = (const persistent_heap<T, Comparator> &base_heap){
+  void operator =(const persistent_heap<T, Comparator> &base_heap) {
     root_ = base_heap.root_;
     size_ = base_heap.size_;
     top_size_ = base_heap.top_size_;
@@ -80,7 +98,7 @@ class persistent_heap {
 
   void push(T value) {
     if (root_ == NULL) {
-      root_.reset(new const node<T>(value));
+      root_.reset(new node<T>(value));
       size_ = 1;
       top_size_ = 1;
     } else {
@@ -100,8 +118,7 @@ class persistent_heap {
     }
   }
 
-
-  T pop(){
+  T pop() {
 
     assert(!empty());
     T result = minimum();
@@ -110,7 +127,7 @@ class persistent_heap {
       size_ = 0;
       top_size_ = 0;
     } else {
-      if (size_ == top_size_){
+      if (size_ == top_size_) {
         top_size_ >>= 1;
       }
       size_--;
@@ -141,13 +158,15 @@ class persistent_heap {
           break;
         }
       }
-      if (((*double_ptr)->child_[1] == NULL &&
-          (*double_ptr)->child_[0] != NULL &&
-          cmp_((*double_ptr)->child_[0]->value_, value))) {
+      if (((*double_ptr)->child_[1] == NULL && (*double_ptr)->child_[0] != NULL
+          && cmp_((*double_ptr)->child_[0]->value_, value))) {
 
         (*double_ptr)->value_ = (*double_ptr)->child_[0]->value_;
-        (*double_ptr)->child_[0].reset(new const node<T>(
-            (*double_ptr)->child_[0], value));
+
+        (*double_ptr)->child_[0].reset(
+            new const node<T>((*double_ptr)->child_[0], value));
+
+
 
       } else {
         (*double_ptr)->value_ = value;
@@ -156,15 +175,15 @@ class persistent_heap {
     return result;
   }
 
-  bool empty(){
+  bool empty() const {
     return (root_ == NULL);
   }
 
-  size_t size(){
+  size_t size() const {
     return size_;
   }
 
-  T minimum(){
+  T minimum() const {
     return (root_)->value_;
   }
 
@@ -178,23 +197,22 @@ class persistent_heap {
   // size without last level (if size_ is (2^n -1)  => size_ == top_size_)
   size_t top_size_;
 
-
-  void swap_if_less(T& a, T& b){
-    if (cmp_(a, b)){
-      std::swap(a,b);
+  void swap_if_less(T& a, T& b) {
+    if (cmp_(a, b)) {
+      std::swap(a, b);
     }
   }
 
-  class router{
-   public:
-    router(const_node_ptr root, size_t size, size_t top_size)
-      : current_(new node<T>(root)),
+  class router {
+    public:
+    router(const_node_ptr root, size_t size, size_t top_size) :
+        current_(new node<T>(root)),
         current_top_size_(top_size),
-        current_last_level_(size- top_size){
+        current_last_level_(size - top_size) {
       count_next();
     }
 
-    void down(){
+    void down() {
       node_ptr next_node(new node<T>(current_->child_[next_]));
       current_->child_[next_] = next_node;
       current_ = next_node;
@@ -203,21 +221,21 @@ class persistent_heap {
       count_next();
     }
 
-    bool next(){
+    bool next() {
       return next_;
     }
 
-    bool end_of_routing(){
-      return ((current_top_size_ == 1 &&
-          (current_last_level_== 0 || current_last_level_== 1)));
+    bool end_of_routing() {
+      return ((current_top_size_ == 1
+          && (current_last_level_ == 0 || current_last_level_ == 1)));
     }
 
     node_ptr current_;
 
    private:
 
-    void count_next(){
-      next_ = ((current_top_size_ + 1)/2 <= current_last_level_);
+    void count_next() {
+      next_ = ((current_top_size_ + 1) / 2 <= current_last_level_);
     }
 
     bool next_;
@@ -226,7 +244,6 @@ class persistent_heap {
   };
 
 };
-
 
 } // namespace stlext
 
