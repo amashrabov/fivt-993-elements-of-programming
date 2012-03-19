@@ -16,7 +16,41 @@ struct node {
 
 
   /*
-  class const_node_ptr : public std::shared_ptr<node<T> > {
+  class node_ptr : public std::shared_ptr<node<T> > {
+
+    void clone(){
+      this->reset(new node(**this));
+    }
+
+    void leaf_node(T value){
+      this->reset(new node(value));
+    }
+
+  };
+
+  class const_node_ptr : public std::shared_ptr<const node<T> > {
+
+   public:
+    void operator =(const node_ptr &base_node){
+      **this->reset(&(*base_node));
+    }
+
+    void clone(){
+      this->reset(new node(**this));
+    }
+
+    void leaf_node(T value){
+      this->reset(new node(value));
+    }
+
+  };
+
+  */
+
+
+
+/*
+  class const_node_ptr : public std::shared_ptr<const node<T> > {
 
     void clone(){
       this->reset(new node<T> >(*this));
@@ -27,7 +61,7 @@ struct node {
     }
 
   };
-  */
+*/
 
   ~node() {
     //std::cout << "delete node value =" << value_ << std::endl;
@@ -81,7 +115,7 @@ class persistent_heap {
   typedef typename node<T>::const_node_ptr const_node_ptr;
 
   persistent_heap() :
-      root_(NULL), size_(0), top_size_(0) {
+      root_(), size_(0), top_size_(0) {
   }
 
   persistent_heap(const persistent_heap<T, Comparator> &base_heap) :
@@ -98,7 +132,7 @@ class persistent_heap {
 
   void push(T value) {
     if (root_ == NULL) {
-      root_.reset(new node<T>(value));
+      root_.reset(new const node<T>(value));
       size_ = 1;
       top_size_ = 1;
     } else {
