@@ -30,18 +30,19 @@ struct gcd {
 
 struct comparator_with_costructor {
 
-  explicit comparator_with_costructor(int a) : fictive(a) {
+  explicit comparator_with_costructor(bool is_less) : is_less_(is_less) {
   }
 
   int operator()(const int& a, const int& b) const {
-    if (a < b) {
-      return a;
+    if (is_less_) {
+
+      return (a < b);
     } else {
-      return b;
+      return (b < a);
     }
   }
 
-  int fictive;
+  bool is_less_;
 
 };
 
@@ -83,15 +84,26 @@ TEST(static_rmq_simple, less) {
   ASSERT_EQ(3, rmq.query(2, 6));
 }
 
-TEST(static_rmq_simple, comparator_with_contructor) {
+TEST(static_rmq_simple, comparator_with_contructor_less) {
   int TEST_ARRAY[] = {1, 2, 3, 4, 5, 6};
   size_t SIZE = sizeof(TEST_ARRAY) / sizeof(TEST_ARRAY[0]);
   static_rmq<int, comparator_with_costructor> rmq(TEST_ARRAY,
       TEST_ARRAY + SIZE,
-      comparator_with_costructor(0));
+      comparator_with_costructor(true));
   ASSERT_EQ(1, rmq.query(0, 1));
   ASSERT_EQ(2, rmq.query(1, 4));
   ASSERT_EQ(3, rmq.query(2, 6));
+}
+
+TEST(static_rmq_simple, comparator_with_contructor_greater) {
+  int TEST_ARRAY[] = {1, 2, 3, 4, 5, 6};
+  size_t SIZE = sizeof(TEST_ARRAY) / sizeof(TEST_ARRAY[0]);
+  static_rmq<int, comparator_with_costructor> rmq(TEST_ARRAY,
+      TEST_ARRAY + SIZE,
+      comparator_with_costructor(false));
+  ASSERT_EQ(1, rmq.query(0, 1));
+  ASSERT_EQ(4, rmq.query(1, 4));
+  ASSERT_EQ(6, rmq.query(2, 6));
 }
 
 TEST(static_rmq_simple, construction_from_input_iterator) {
