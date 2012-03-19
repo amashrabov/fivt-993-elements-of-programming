@@ -6,7 +6,7 @@
 #include <memory>
 #include <iostream>
 
-namespace stlext {
+namespace pds {
 
 template<class T>
 struct node {
@@ -279,6 +279,6 @@ class persistent_heap {
 
 };
 
-} // namespace stlext
+} // namespace pds
 
 #endif /* PERSISTENT_HEAP_H_ */
