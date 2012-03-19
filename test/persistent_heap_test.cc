@@ -7,7 +7,7 @@
 
 #include "persistent_heap.h"
 
-namespace stlext {
+namespace pds {
 
 TEST(persistent_heap, simple) {
   persistent_heap<int> h;
