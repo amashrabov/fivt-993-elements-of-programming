@@ -8,16 +8,35 @@
 
 namespace pds {
 
+
+
 template<class T>
 struct node {
 
-  typedef std::shared_ptr<node<T> > node_ptr;
-  typedef std::shared_ptr<const node<T> > const_node_ptr;
+  //typedef std::shared_ptr<node<T> > node_ptr;
+  //typedef std::shared_ptr<const node<T> > const_node_ptr;
+
+  //typedef a_node_ptr<node<T> > node_ptr;
+  //typedef a_node_ptr<const node<T> > const_node_ptr;
 
 
-  /*
+
+
   class node_ptr : public std::shared_ptr<node<T> > {
 
+   public:
+
+    node_ptr() :
+        std::shared_ptr<node<T> >(){
+      //std::cout << "node_ptr empty " <<std::endl;
+    }
+
+    explicit node_ptr(node<T>* base_node) :
+        std::shared_ptr<node<T> >(base_node){
+      //std::cout << "node_ptr" << base_node->value_  <<std::endl;
+    }
+
+/*
     void clone(){
       this->reset(new node(**this));
     }
@@ -25,43 +44,40 @@ struct node {
     void leaf_node(T value){
       this->reset(new node(value));
     }
-
+*/
   };
 
   class const_node_ptr : public std::shared_ptr<const node<T> > {
 
    public:
+
+
+
     void operator =(const node_ptr &base_node){
-      **this->reset(&(*base_node));
+      //std::cout << "const_node_ptr" << base_node->value_ << std::endl;
+      //std::shared_ptr<const node<T> > a = base_node;
+      this->std::shared_ptr<const node<T> >::operator=(
+          (std::shared_ptr<const node<T> >) base_node);
     }
 
-    void clone(){
-      this->reset(new node(**this));
+
+    node_ptr clone(){
+      node_ptr my_clone(new node(**this));
+      this->std::shared_ptr<const node<T> >::operator=(
+          (std::shared_ptr<const node<T> >) my_clone);
+      return my_clone;
     }
 
-    void leaf_node(T value){
+    void make_leaf(T value){
       this->reset(new node(value));
     }
 
   };
 
-  */
 
 
 
-/*
-  class const_node_ptr : public std::shared_ptr<const node<T> > {
 
-    void clone(){
-      this->reset(new node<T> >(*this));
-    }
-
-    void leaf_node(T value){
-      this->reset(new node<T> >(value));
-    }
-
-  };
-*/
 
   ~node() {
     //std::cout << "delete node value =" << value_ << std::endl;
@@ -88,13 +104,14 @@ struct node {
     //std::cout << "new node value =" << value_ << std::endl;
   }
 
+  /*
   node(const_node_ptr base_node, const T &value) :
       value_(value) {
     child_[0] = base_node->child_[0];
     child_[1] = base_node->child_[1];
     //std::cout << "new node value =" << value_ << std::endl;
   }
-
+  */
 
   T value_;
 
@@ -104,6 +121,18 @@ struct node {
 
 };
 
+/*
+template<class T>
+typename node<T>::node_ptr clone(const typename node<T>::node_ptr& base_node) {
+  return typename node<T>::node_ptr(new node<T>(base_node));
+}
+
+
+template<class T>
+typename node<T>::const_node_ptr clone(const typename node<T>::const_node_ptr& base_node) {
+  return typename node<T>::const_node_ptr(new node<T>(base_node));
+}
+*/
 
 
 template<class T, class Comparator = std::less<T> >
@@ -132,18 +161,23 @@ class persistent_heap {
 
   void push(T value) {
     if (root_ == NULL) {
-      root_.reset(new const node<T>(value));
+      //root_.reset(new const node<T>(value));
+      root_.make_leaf(value);
       size_ = 1;
       top_size_ = 1;
     } else {
-      router r(root_, size_, top_size_);
-      root_ = r.current_;
+      //std::cout << "ok1 " << value <<std::endl;
+      //std::cout << "root " << root_->value_ <<std::endl;
+      node_ptr base = root_.clone();
+      router r(base, size_, top_size_);
       while (!r.end_of_routing()) {
+        //std::cout << "ok2 " << value <<std::endl;
         swap_if_less(value, r.current_->value_);
         r.down();
       }
+      //std::cout << "ok3 " << value <<std::endl;
       swap_if_less(value, r.current_->value_);
-      r.current_->child_[r.next()].reset(new node<T>(value));
+      r.current_->child_[r.next()].make_leaf(value);
 
       size_++;
       if (size_ - 1 == 2 * top_size_) {
@@ -165,9 +199,8 @@ class persistent_heap {
         top_size_ >>= 1;
       }
       size_--;
-
-      router r(root_, size_, top_size_);
-      root_ = r.current_;
+      node_ptr base = root_.clone();
+      router r(base, size_, top_size_);
       node_ptr new_root = r.current_;
       while (!r.end_of_routing()) {
         r.down();
@@ -183,10 +216,15 @@ class persistent_heap {
                            (*double_ptr)->child_[1]->value_));
         min_child_value = (*double_ptr)->child_[min_child]->value_;
         if (cmp_(min_child_value, value)) {
+           /*
           node_ptr child_temp(new node<T>((*double_ptr)->child_[min_child]));
           (*double_ptr)->child_[min_child] = child_temp;
           (*double_ptr)->value_ = min_child_value;
           temp = child_temp;
+          double_ptr = &temp;
+          */
+          (*double_ptr)->value_ = min_child_value;
+          temp = (*double_ptr)->child_[min_child].clone();
           double_ptr = &temp;
         } else {
           break;
@@ -197,9 +235,12 @@ class persistent_heap {
 
         (*double_ptr)->value_ = (*double_ptr)->child_[0]->value_;
 
+        /*
         (*double_ptr)->child_[0].reset(
             new const node<T>((*double_ptr)->child_[0], value));
-
+        */
+        temp = (*double_ptr)->child_[0].clone();
+        temp->value_ = value;
 
 
       } else {
@@ -239,17 +280,18 @@ class persistent_heap {
 
   class router {
     public:
-    router(const_node_ptr root, size_t size, size_t top_size) :
-        current_(new node<T>(root)),
+    router(node_ptr base_ptr, size_t size, size_t top_size) :
+        current_(base_ptr),
         current_top_size_(top_size),
         current_last_level_(size - top_size) {
       count_next();
     }
 
     void down() {
-      node_ptr next_node(new node<T>(current_->child_[next_]));
-      current_->child_[next_] = next_node;
-      current_ = next_node;
+      //node_ptr next_node(new node<T>(current_->child_[next_]));
+      //current_->child_[next_] = next_node;
+      //current_ = next_node;
+      current_ = current_->child_[next_].clone();
       current_top_size_ >>= 1;
       current_last_level_ %= current_top_size_ + 1;
       count_next();
