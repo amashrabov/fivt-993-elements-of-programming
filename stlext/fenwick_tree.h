@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <vector>
+#include <array>
 
 #include <cassert>
 #include <cstdarg>
@@ -22,7 +23,9 @@ Notes:
 
 namespace stlext {
 
-template<size_t N, class T, class AddFunc,class SubFunc>
+template<size_t N, class T,
+  class AddFunc = std::plus<T>,
+  class SubFunc = std::minus<T> >
   class FenwickTree {
    public:
     typedef vector<size_t> Coord;
@@ -48,17 +51,38 @@ template<size_t N, class T, class AddFunc,class SubFunc>
       return dims_;
     }
 
+    T aggregate(const Coord& c) const {
+      assert(c1.size() == N);
+      Coord curr = c;
+      while () { // some condition here
+        //TODO: iterate for 'curr'
+        //TODO: aggregate a result
+      }
+    }
+
     T aggregate(const Coord& c1,const Coord& c2) const {
       assert(c1.size() == N);
       assert(c2.size() == N);
       for(size_t i = 0; i < N; ++i) {
         assert(c1[i]<=c2[i]);
       }
-      // TODO: Some street magic returning the sum of elements
+      // I/E formula here
+      Coord c = c2;
+      T result = aggregate(c);
+      for(size_t i = 1; i < (1<<N); ++i) { // bitmask
+        for(size_t j = 0; j < N; ++j) { // replace bits
+          if( (i>>j)&1 == 1){
+            c[j] = c1[j];
+          }
+        }
+        // here count NBITS and use AddFunc if even, SubFunc - if odd
+      }
+      return result;
     }
 
     void set(const Coord& c,const T& value){
       assert(c.size() == N);
+      Coord curr = c;
       // TODO: Some street magic which does the job
     }
 
@@ -77,6 +101,7 @@ template<size_t N, class T, class AddFunc,class SubFunc>
 
     AddFunc addFunc_;
     SubFunc subFunc_;
+    T neutralElem_;
 
     static size_t power (size_t a, size_t p) {
       size_t res = 1;

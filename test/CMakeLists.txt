@@ -5,6 +5,7 @@ include_directories(${CMAKE_SOURCE_DIR}/stlext)
 set (TESTS
   static_rsq_test.cc
   safe_distance_test.cc
+  fenwick_tree_test.cpp
 )
 
 add_executable (unittests
