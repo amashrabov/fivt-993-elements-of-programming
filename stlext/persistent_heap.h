@@ -20,11 +20,6 @@ struct node {
 
    public:
 
-    void operator =(const node_ptr &base_node){
-      this->base_class::operator=(base_node);
-    }
-
-
     node_ptr clone(){
       node_ptr my_clone(new node(**this));
       this->base_class::operator=(static_cast<base_class>(my_clone));
@@ -44,10 +39,8 @@ struct node {
 
 
 
-
-
   ~node() {
-    //std::cout << "delete node value =" << value_ << std::endl;
+    //std::cout << "delete node value =" << value << std::endl;
   }
 
   explicit node(const T &the_value) :

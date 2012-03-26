@@ -47,7 +47,6 @@ TEST(persistent_heap, random_vector) {
 }
 
 
-
 TEST(persistent_heap, stress_random_vector) {
   int size = 10000;
   for (size_t  j = 0; j < 100; j++) {
@@ -76,6 +75,15 @@ TEST(persistent_heap, stress_random_vector) {
 TEST(persistent_heap, simple_persistence) {
   persistent_heap<int> h1;
   h1.push(5);
+  {
+    persistent_heap<int> hx(h1);
+  }
+  {
+    persistent_heap<int> hx(h1);
+  }
+  {
+    persistent_heap<int> hx(h1);
+  }
   persistent_heap<int> h2(h1);
   h2.push(4);
   h2.push(6);
