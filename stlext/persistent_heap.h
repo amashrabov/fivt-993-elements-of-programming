@@ -20,13 +20,13 @@ struct node {
 
    public:
 
-    node_ptr clone(){
+    node_ptr clone() {
       node_ptr my_clone(new node(**this));
       this->base_class::operator=(static_cast<base_class>(my_clone));
       return my_clone;
     }
 
-    void make_leaf(T value){
+    void make_leaf(T value) {
       this->reset(new node(value));
     }
 
@@ -36,12 +36,6 @@ struct node {
 
   };
 
-
-
-
-  ~node() {
-    //std::cout << "delete node value =" << value << std::endl;
-  }
 
   explicit node(const T &the_value) :
       value(the_value) {
@@ -55,11 +49,15 @@ struct node {
     //std::cout << "new node value =" << value_ << std::endl;
   }
 
+  ~node() {
+    //std::cout << "delete node value =" << value << std::endl;
+  }
+
   T value;
 
   const_node_ptr child[2];
 
- private:
+ //private:
 
 };
 
@@ -95,19 +93,15 @@ class persistent_heap {
       size_ = 1;
       top_size_ = 1;
     } else {
-      node_ptr base = root_.clone();
-      router r(base, size_, top_size_);
+      node_ptr new_root = root_.clone();
+      router r(new_root, size_, top_size_);
       while (!r.end_of_routing()) {;
-        swap_if_less(value, r.current_->value);
+        swap_if_less(value, r.current_value());
         r.down();
       }
-      swap_if_less(value, r.current_->value);
-      r.current_->child[r.next()].make_leaf(value);
-
-      size_++;
-      if (size_ - 1 == 2 * top_size_) {
-        top_size_ = size_;
-      }
+      swap_if_less(value, r.current_value());
+      r.next().make_leaf(value);
+      increment_size();
     }
   }
 
@@ -120,44 +114,28 @@ class persistent_heap {
       size_ = 0;
       top_size_ = 0;
     } else {
-      if (size_ == top_size_) {
-        top_size_ >>= 1;
-      }
-      size_--;
-      node_ptr base = root_.clone();
-      router r(base, size_, top_size_);
-      node_ptr new_root = r.current_;
-      while (!r.end_of_routing()) {
-        r.down();
-      }
-      T value = r.current_->child[r.next()]->value;
-      r.current_->child[r.next()].reset();
-      node_ptr* double_ptr(&new_root);
-      node_ptr temp;
-      while ((*double_ptr)->child[1] != NULL) {
-        bool min_child;
-        T min_child_value;
-        min_child = !(cmp_((*double_ptr)->child[0]->value,
-                           (*double_ptr)->child[1]->value));
-        min_child_value = (*double_ptr)->child[min_child]->value;
-        if (cmp_(min_child_value, value)) {
-          (*double_ptr)->value = min_child_value;
-          temp = (*double_ptr)->child[min_child].clone();
-          double_ptr = &temp;
+      decrement_size();
+      node_ptr new_root = root_.clone();
+      T value = delete_last_node(new_root);
+      node_ptr& curr(new_root);
+      while (curr->child[1] != NULL) {
+        bool min_child_no;
+        min_child_no = !(cmp_(curr->child[0]->value,
+                           curr->child[1]->value));
+        T min_value = curr->child[min_child_no]->value;
+        if (cmp_(min_value, value)) {
+          curr->value = min_value;
+          curr = curr->child[min_child_no].clone();
         } else {
-          break;
+          break; // goto next if
         }
       }
-      if (((*double_ptr)->child[1] == NULL && (*double_ptr)->child[0] != NULL
-          && cmp_((*double_ptr)->child[0]->value, value))) {
-
-        (*double_ptr)->value = (*double_ptr)->child[0]->value;
-
-        temp = (*double_ptr)->child[0].clone();
-        temp->value = value;
-
+      if ((curr->child[1] == NULL && curr->child[0] != NULL
+          && cmp_(curr->child[0]->value, value))) {
+        curr->value = curr->child[0]->value;
+        curr->child[0].clone()->value = value;
       } else {
-        (*double_ptr)->value = value;
+        curr->value = value;
       }
     }
     return result;
@@ -175,7 +153,7 @@ class persistent_heap {
     return (root_)->value;
   }
 
- protected:
+ private:
 
   Comparator cmp_;
   const_node_ptr root_;
@@ -191,9 +169,33 @@ class persistent_heap {
     }
   }
 
+  void increment_size(){
+    size_++;
+    if (size_ - 1 == 2 * top_size_) {
+      top_size_ = size_;
+    }
+  }
+
+  void decrement_size(){
+    if (size_ == top_size_) {
+      top_size_ >>= 1;
+    }
+    size_--;
+  }
+
+  T delete_last_node(const node_ptr& new_root){
+    router r(new_root, size_, top_size_);
+    while (!r.end_of_routing()) {
+      r.down();
+    }
+    T value = r.next()->value;
+    r.next().reset();
+    return value;
+  }
+
   class router {
     public:
-    router(node_ptr base_ptr, size_t size, size_t top_size) :
+    router(const node_ptr &base_ptr, size_t size, size_t top_size) :
         current_(base_ptr),
         current_top_size_(top_size),
         current_last_level_(size - top_size) {
@@ -201,17 +203,14 @@ class persistent_heap {
     }
 
     void down() {
-      //node_ptr next_node(new node<T>(current_->child_[next_]));
-      //current_->child_[next_] = next_node;
-      //current_ = next_node;
-      current_ = current_->child[next_].clone();
+      current_ = next().clone();
       current_top_size_ >>= 1;
       current_last_level_ %= current_top_size_ + 1;
       count_next();
     }
 
-    bool next() {
-      return next_;
+    const_node_ptr& next() {
+      return current_->child[next_];
     }
 
     bool end_of_routing() {
@@ -219,9 +218,13 @@ class persistent_heap {
           && (current_last_level_ == 0 || current_last_level_ == 1)));
     }
 
-    node_ptr current_;
+    T& current_value() {
+      return current_->value;
+    }
 
    private:
+
+    node_ptr current_;
 
     void count_next() {
       next_ = ((current_top_size_ + 1) / 2 <= current_last_level_);
