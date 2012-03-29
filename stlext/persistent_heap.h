@@ -106,7 +106,6 @@ class persistent_heap {
   }
 
   T pop() {
-
     assert(!empty());
     T result = minimum();
     if (size_ == 1) {
@@ -120,8 +119,7 @@ class persistent_heap {
       node_ptr& curr(new_root);
       while (curr->child[1] != NULL) {
         bool min_child_no;
-        min_child_no = !(cmp_(curr->child[0]->value,
-                           curr->child[1]->value));
+        min_child_no = !(cmp_(curr->child[0]->value, curr->child[1]->value));
         T min_value = curr->child[min_child_no]->value;
         if (cmp_(min_value, value)) {
           curr->value = min_value;
@@ -193,6 +191,11 @@ class persistent_heap {
     return value;
   }
 
+
+  /*
+   * this class help us to come in last node
+   */
+
   class router {
     public:
     router(const node_ptr &base_ptr, size_t size, size_t top_size) :
@@ -202,6 +205,8 @@ class persistent_heap {
       count_next();
     }
 
+    // move current node to next on the way
+
     void down() {
       current_ = next().clone();
       current_top_size_ >>= 1;
@@ -209,9 +214,13 @@ class persistent_heap {
       count_next();
     }
 
+    // return const_node_ptr to next node on the way
+
     const_node_ptr& next() {
       return current_->child[next_];
     }
+
+    // return true when next is last node
 
     bool end_of_routing() {
       return ((current_top_size_ == 1
