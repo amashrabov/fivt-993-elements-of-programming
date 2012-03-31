@@ -8,7 +8,7 @@ set (TESTS
   safe_distance_test.cc
   fenwick_tree_test.cpp
   integer_part_of_log2_test.cc
-  static_rmq_test.cc
+ static_rmq_test.cc
 )
 
 add_executable (unittests
