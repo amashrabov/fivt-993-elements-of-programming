@@ -7,6 +7,7 @@
 #include <cassert>
 #include <functional>
 #include <memory>
+#include <iostream>
 
 namespace stlext
 {
@@ -67,13 +68,27 @@ class PersistantSegmentTree
 					valDef = v.valDef;
 					leftV = v.leftV;
 					rightV = v.rightV;					
-				}											
+				}	
+				void writeVertex(std::ostream& fout)		
+				{
+					fout << "{sum = " << sum << "; val = ";
+					if (valDef)
+						fout << val;
+					else
+						fout << "NA";
+					fout << "; delta = ";
+					if (deltaDef)
+						fout << delta;
+					else
+						fout << "NA";
+					fout << "}";
+				}										
 		}; 
 
 		typedef std::shared_ptr<Vertex> ptrv;
 
 		size_t size_;	
-		std::shared_ptr<Vertex> root_;
+		ptrv root_;
 		int persCode_;		
 
 		void init_(ptrv &root, size_t l, size_t r, const T &obj)
@@ -118,8 +133,9 @@ class PersistantSegmentTree
 		{
 			if (persCode_ == NOTPERSISTANT)
 				return; 
-			ptrv tmp(new Vertex(*root_) );
-			root_ = tmp;
+			//std::cout << "CLONE MADE\n";
+			ptrv tmp(new Vertex(*root) );
+			root = tmp;
 		}
 		// end of procedure
 		void assignOnVertexSegment_(ptrv &root, const T &obj, int l, int r)
@@ -193,6 +209,19 @@ class PersistantSegmentTree
 			}
 			root->sum = summator_(root->leftV->sum, root->rightV->sum);
 		}
+		void writeDfs_(std::ostream &fout, ptrv &root, int depth, int l, int r)
+		{
+			int mid = (l+r)/2;
+			if (l != r)
+				writeDfs_(fout, root->leftV, depth+1, l, mid);
+			for (int i = 0; i < depth; i++)
+				fout << "------";
+			fout << l << " " << r << " ";
+			root->writeVertex(fout);
+			fout << "\n";
+			if (l != r)
+				writeDfs_(fout, root->rightV, depth+1, mid+1, r);
+		}
 	public:
 		static const int ASSIGNMENT = 3124124;
 		static const int ADDITION = 1132;
@@ -216,6 +245,18 @@ class PersistantSegmentTree
 			}
 			init_(root_, 0, size_-1, obj);
 		}
+		PersistantSegmentTree(const PersistantSegmentTree<T, TSum, TScalMult> &tree)
+		{
+			size_ = tree.size_;	
+			root_ = tree.root_;
+			persCode_ = tree.persCode_;		
+		}
+		void operator = (const PersistantSegmentTree<T, TSum, TScalMult> &tree)
+		{
+			size_ = tree.size_;	
+			root_ = tree.root_;
+			persCode_ = tree.persCode_;		
+		}
 		
 		size_t size()
 		{
@@ -237,6 +278,13 @@ class PersistantSegmentTree
 		{
 			assert(0 <= l && l <= r && r < size_);				
 			update_(ADDITION, root_, obj, 0, size_-1, l, r);			
+		}
+		void writeTree(std::ostream &fout)
+		{
+			fout << "===================================================================\n";
+			writeDfs_(fout, root_, 0, 0, size_-1);
+			fout << "===================================================================\n";
+
 		}
 
 };
