@@ -50,12 +50,12 @@ TEST(persistent_heap, random_vector) {
 }
 
 
+
+
+
 TEST(persistent_heap, stress_random_vector) {
   int size = 10000;
   for (size_t  j = 0; j < 100; j++) {
-    if (j > 10) {
-      size = 1000;
-    }
     std::srand(j);
     persistent_heap<int> h;
     std::vector<int> v;
@@ -73,6 +73,27 @@ TEST(persistent_heap, stress_random_vector) {
   }
 }
 
+TEST(persistent_heap, huge_T_stress_test){
+  int size = 10000;
+  int size_T_vector = 100;
+  for (size_t  j = 0; j < 100; j++) {
+    std::srand(j);
+    persistent_heap<std::vector<int> > h;
+    std::vector<std::vector<int>> v;
+    for (size_t i = 0; i<size; i++){
+      std::vector<int> tmp = std::vector<int>(size_T_vector, i);
+      v.push_back(tmp);
+    }
+    random_shuffle (v.begin(), v.end());
+    for( auto i : v ) {
+      h.push(i);
+    }
+    for(size_t i = 0; i<size; i++) {
+      ASSERT_EQ(std::vector<int>(size_T_vector, i), h.top());
+      h.pop();
+    }
+  }
+}
 
 
 
@@ -174,4 +195,4 @@ TEST(persistent_heap, stress_persistence) {
 }
 
 
-}
+} // namespace pds

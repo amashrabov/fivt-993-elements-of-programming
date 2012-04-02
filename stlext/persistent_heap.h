@@ -88,13 +88,11 @@ class persistent_heap {
 
   void push(T value) {
     if (root_ == NULL) {
-      root_.make_leaf(value);
-      size_ = 1;
-      top_size_ = 1;
+      construct_root(value);
     } else {
       node_ptr new_root = root_.clone();
       router r(new_root, size_, top_size_);
-      while (!r.isEnd()) {;
+      while (!r.is_end()) {;
         swap_if_less(value, r.current_value());
         r.down();
       }
@@ -109,31 +107,30 @@ class persistent_heap {
   void pop() {
     assert(!empty());
     if (size_ == 1) {
-      root_.reset();
-      size_ = 0;
-      top_size_ = 0;
+      delete_root();
     } else {
       decrement_size();
       node_ptr new_root = root_.clone();
       T value = delete_last_node(new_root);
       node_ptr& curr(new_root);
       while (curr->child[1] != NULL) {
-        bool min_child_no;
-        min_child_no = !(cmp_(curr->child[0]->value, curr->child[1]->value));
-        T min_value = curr->child[min_child_no]->value;
+        bool min_child_number = !(cmp_(curr->child[0]->value,
+                                   curr->child[1]->value));
+        T min_value = curr->child[min_child_number]->value;
         if (cmp_(min_value, value)) {
-          curr->value = min_value;
-          curr = curr->child[min_child_no].clone();
+          curr->value = std::move(min_value);
+          curr = curr->child[min_child_number].clone();
         } else {
           break; // goto next if
         }
       }
-      bool only_left_child = (curr->child[1] == NULL && curr->child[0] != NULL);
+      bool only_left_child = (curr->child[1] == NULL &&
+          curr->child[0] != NULL);
       if ((only_left_child && cmp_(curr->child[0]->value, value))) {
         curr->value = curr->child[0]->value;
-        curr->child[0].clone()->value = value;
+        curr->child[0].clone()->value = std::move(value);
       } else {
-        curr->value = value;
+        curr->value = std::move(value);
       }
     }
   }
@@ -147,7 +144,7 @@ class persistent_heap {
   }
 
   const T& top() const {
-    return (root_)->value;
+    return root_->value;
   }
 
  private:
@@ -159,6 +156,18 @@ class persistent_heap {
 
   // size without last level (if size_ is (2^n -1)  => size_ == top_size_)
   size_t top_size_;
+
+  void construct_root(const T& value) {
+    root_.make_leaf(value);
+    size_ = 1;
+    top_size_ = 1;
+  }
+
+  void delete_root(){
+    root_.reset();
+    size_ = 0;
+    top_size_ = 0;
+  }
 
   void swap_if_less(T& a, T& b) {
     if (cmp_(a, b)) {
@@ -182,7 +191,7 @@ class persistent_heap {
 
   T delete_last_node(const node_ptr& new_root){
     router r(new_root, size_, top_size_);
-    while (!r.isEnd()) {
+    while (!r.is_end()) {
       r.down();
     }
     T value = r.next()->value;
@@ -221,7 +230,7 @@ class persistent_heap {
 
     // return true when next is last node
 
-    bool isEnd() {
+    bool is_end() {
       return ((current_top_size_ == 1
           && (current_last_level_ == 0 || current_last_level_ == 1)));
     }
