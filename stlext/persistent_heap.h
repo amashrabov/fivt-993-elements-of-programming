@@ -36,19 +36,6 @@ struct node {
 
   };
 
-
-  explicit node(const T &the_value) :
-      value(the_value) {
-    //std::cout << "new node value =" << value_ << std::endl;
-  }
-
-  explicit node(const_node_ptr base_node) :
-      value(base_node->value) {
-    child[0] = base_node->child[0];
-    child[1] = base_node->child[1];
-    //std::cout << "new node value =" << value_ << std::endl;
-  }
-
   ~node() {
     //std::cout << "delete node value =" << value << std::endl;
   }
@@ -57,7 +44,19 @@ struct node {
 
   const_node_ptr child[2];
 
- //private:
+ private:
+
+  explicit node(const node& base_node) :
+      value(base_node.value) {
+    child[0] = base_node.child[0];
+    child[1] = base_node.child[1];
+    //std::cout << "new node value =" << value_ << std::endl;
+  }
+
+  explicit node(const T &the_value) :
+      value(the_value) {
+    //std::cout << "new node value =" << value_ << std::endl;
+  }
 
 };
 
@@ -95,7 +94,7 @@ class persistent_heap {
     } else {
       node_ptr new_root = root_.clone();
       router r(new_root, size_, top_size_);
-      while (!r.end_of_routing()) {;
+      while (!r.isEnd()) {;
         swap_if_less(value, r.current_value());
         r.down();
       }
@@ -105,9 +104,10 @@ class persistent_heap {
     }
   }
 
-  T pop() {
+
+
+  void pop() {
     assert(!empty());
-    T result = minimum();
     if (size_ == 1) {
       root_.reset();
       size_ = 0;
@@ -128,15 +128,14 @@ class persistent_heap {
           break; // goto next if
         }
       }
-      if ((curr->child[1] == NULL && curr->child[0] != NULL
-          && cmp_(curr->child[0]->value, value))) {
+      bool only_left_child = (curr->child[1] == NULL && curr->child[0] != NULL);
+      if ((only_left_child && cmp_(curr->child[0]->value, value))) {
         curr->value = curr->child[0]->value;
         curr->child[0].clone()->value = value;
       } else {
         curr->value = value;
       }
     }
-    return result;
   }
 
   bool empty() const {
@@ -147,7 +146,7 @@ class persistent_heap {
     return size_;
   }
 
-  T minimum() const {
+  const T& top() const {
     return (root_)->value;
   }
 
@@ -183,7 +182,7 @@ class persistent_heap {
 
   T delete_last_node(const node_ptr& new_root){
     router r(new_root, size_, top_size_);
-    while (!r.end_of_routing()) {
+    while (!r.isEnd()) {
       r.down();
     }
     T value = r.next()->value;
@@ -222,7 +221,7 @@ class persistent_heap {
 
     // return true when next is last node
 
-    bool end_of_routing() {
+    bool isEnd() {
       return ((current_top_size_ == 1
           && (current_last_level_ == 0 || current_last_level_ == 1)));
     }
