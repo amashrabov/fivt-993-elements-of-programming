@@ -6,10 +6,10 @@
 #include <functional>
 #include <vector>
 
+#include <cassert>
+
 using std::vector;
 using std::array;
-using std::cout;
-using std::endl;
 
 /*
 Author: Alex Taran
@@ -81,7 +81,7 @@ template<size_t N, class T,
       T result = aggregate(c);
       bool negation = false;
       for (size_t i = 1; i < (1<<N); ++i) {  // bitmask
-        size_t gray = i^(i>>1);
+        size_t gray = i ^ (i >> 1);
         negation = !negation;
         for (size_t j = 0; j < N; ++j) {  // replace bits
           if ((gray >> j) & 1 == 1) {
@@ -106,7 +106,7 @@ template<size_t N, class T,
         incElement(curr, delta);
         size_t i;
         for (i = N - 1; i > 0; --i) {
-          if (curr[i]|(curr[i]+1) >= dims_[i]) {
+          if (curr[i] | (curr[i] + 1) >= dims_[i]) {
             curr[i] = c[i];
           } else {
             break;
