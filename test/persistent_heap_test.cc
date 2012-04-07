@@ -100,15 +100,6 @@ TEST(persistent_heap, huge_T_stress_test){
 TEST(persistent_heap, simple_persistence) {
   persistent_heap<int> h1;
   h1.push(5);
-  {
-    persistent_heap<int> hx(h1);
-  }
-  {
-    persistent_heap<int> hx(h1);
-  }
-  {
-    persistent_heap<int> hx(h1);
-  }
   persistent_heap<int> h2(h1);
   h2.push(4);
   h2.push(6);

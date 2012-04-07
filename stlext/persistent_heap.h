@@ -50,12 +50,12 @@ struct node {
       value(base_node.value) {
     child[0] = base_node.child[0];
     child[1] = base_node.child[1];
-    //std::cout << "new node value =" << value_ << std::endl;
+    //std::cout << "new node value =" << value << std::endl;
   }
 
   explicit node(const T &the_value) :
       value(the_value) {
-    //std::cout << "new node value =" << value_ << std::endl;
+    //std::cout << "new node value =" << value << std::endl;
   }
 
 };
@@ -163,7 +163,7 @@ class persistent_heap {
     top_size_ = 1;
   }
 
-  void delete_root(){
+  void delete_root() {
     root_.reset();
     size_ = 0;
     top_size_ = 0;
@@ -175,21 +175,21 @@ class persistent_heap {
     }
   }
 
-  void increment_size(){
+  void increment_size() {
     size_++;
     if (size_ - 1 == 2 * top_size_) {
       top_size_ = size_;
     }
   }
 
-  void decrement_size(){
+  void decrement_size() {
     if (size_ == top_size_) {
       top_size_ >>= 1;
     }
     size_--;
   }
 
-  T delete_last_node(const node_ptr& new_root){
+  T delete_last_node(const node_ptr& new_root) {
     router r(new_root, size_, top_size_);
     while (!r.is_end()) {
       r.down();
