@@ -9,7 +9,6 @@
 namespace pds {
 
 
-
 template<class T>
 struct node {
 
@@ -72,6 +71,27 @@ class persistent_heap {
 
   persistent_heap() :
       root_(), size_(0), top_size_(0) {
+  }
+
+  persistent_heap(Comparator cmp) :
+      cmp_(cmp), root_(), size_(0), top_size_(0) {
+  }
+
+  template<class Iterator>
+  persistent_heap(Iterator begin, Iterator end) :
+      root_(), size_(0), top_size_(0) {
+    for (Iterator it = begin; it != end; ++it) {
+      this->push(*it);
+    }
+  }
+
+
+  template<class Iterator>
+  persistent_heap(Iterator begin, Iterator end, Comparator cmp) :
+      cmp_(cmp), root_(), size_(0), top_size_(0) {
+    for (Iterator it = begin; it != end; ++it) {
+      this->push(*it);
+    }
   }
 
   persistent_heap(const persistent_heap<T, Comparator> &base_heap) :
