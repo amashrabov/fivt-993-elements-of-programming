@@ -97,13 +97,15 @@ class persistent_heap {
   persistent_heap(const persistent_heap<T, Comparator> &base_heap) :
       root_(base_heap.root_),
       size_(base_heap.size_),
-      top_size_(base_heap.top_size_) {
+      top_size_(base_heap.top_size_),
+      cmp_(base_heap.cmp_){
   }
 
   void operator =(const persistent_heap<T, Comparator> &base_heap) {
     root_ = base_heap.root_;
     size_ = base_heap.size_;
     top_size_ = base_heap.top_size_;
+    cmp_ = base_heap.cmp_;
   }
 
   void push(T value) {
