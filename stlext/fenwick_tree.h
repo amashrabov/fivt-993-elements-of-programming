@@ -8,9 +8,6 @@
 
 #include <cassert>
 
-using std::vector;
-using std::array;
-
 /*
 Author: Alex Taran
 Module: Fenwick tree
@@ -29,7 +26,7 @@ template<size_t N, class T,
   class SubFunc = std::minus<T> >
   class FenwickTree {
    public:
-    typedef array<size_t, N> Coord;
+    typedef std::array<size_t, N> Coord;
 
     FenwickTree<N, T, AddFunc, SubFunc> () {
       dims_.fill(0);
@@ -130,19 +127,11 @@ template<size_t N, class T,
    private:
     Coord dims_;
     Coord koefs_;
-    vector<T> data_;
+    std::vector<T> data_;
 
     AddFunc addFunc_;
     SubFunc subFunc_;
     T neutralElem_;
-
-    static size_t power(size_t a, size_t p) {
-      size_t res = 1;
-      for (size_t i = 0; i < p; ++i) {
-        res *= a;
-      }
-      return res;
-    }
 
     void reset() { /* resets koefs_ and data_ size*/
       size_t k = 1, i = N;
