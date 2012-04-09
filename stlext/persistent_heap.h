@@ -25,7 +25,7 @@ struct node {
       return my_clone;
     }
 
-    void make_leaf(T value) {
+    void make_leaf(const T& value) {
       this->reset(new node(value));
     }
 
@@ -94,19 +94,6 @@ class persistent_heap {
     }
   }
 
-  persistent_heap(const persistent_heap<T, Comparator> &base_heap) :
-      root_(base_heap.root_),
-      size_(base_heap.size_),
-      top_size_(base_heap.top_size_),
-      cmp_(base_heap.cmp_){
-  }
-
-  void operator =(const persistent_heap<T, Comparator> &base_heap) {
-    root_ = base_heap.root_;
-    size_ = base_heap.size_;
-    top_size_ = base_heap.top_size_;
-    cmp_ = base_heap.cmp_;
-  }
 
   void push(T value) {
     if (root_ == NULL) {
@@ -133,12 +120,12 @@ class persistent_heap {
     } else {
       decrement_size();
       node_ptr new_root = root_.clone();
-      T value = delete_last_node(new_root);
+      T value(delete_last_node(new_root));
       node_ptr& curr(new_root);
       while (curr->child[1] != NULL) {
         bool min_child_number = !(cmp_(curr->child[0]->value,
                                    curr->child[1]->value));
-        T min_value = curr->child[min_child_number]->value;
+        T min_value(curr->child[min_child_number]->value);
         if (cmp_(min_value, value)) {
           curr->value = std::move(min_value);
           curr = curr->child[min_child_number].clone();
@@ -216,7 +203,7 @@ class persistent_heap {
     while (!r.is_end()) {
       r.down();
     }
-    T value = r.next()->value;
+    T value(r.next()->value);
     r.next().reset();
     return value;
   }

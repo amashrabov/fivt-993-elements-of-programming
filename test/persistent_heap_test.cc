@@ -85,6 +85,7 @@ TEST(persistent_heap, huge_T_stress_test) {
   }
 }
 
+
 TEST(persistent_heap, simple_persistence) {
   persistent_heap<int> h1;
   h1.push(5);
