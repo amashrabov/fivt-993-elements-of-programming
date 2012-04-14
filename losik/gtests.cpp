@@ -7,6 +7,7 @@
 #include "find_first_not_less.h"
 #include "adviced_search.h"
 
+using namespace stlext;
 //#define LOG
 
 

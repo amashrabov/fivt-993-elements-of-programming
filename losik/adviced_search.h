@@ -7,6 +7,8 @@
 #include "comparator_mutator.h"
 #include "find_first_not_less.h"
 
+namespace stlext {
+
 // Sarches for the first object compared not less than element in the sorted [begin, end) interval.
 // Returns end if no such element present.
 // The time is O(log|advice - result|)
@@ -116,4 +118,5 @@ std::pair<Iterator, Iterator> adviced_equal_range(Iterator begin, Iterator end, 
   return adviced_equal_range(begin, end, advice, element, std::less<T>());
 }
 
+};
 #endif

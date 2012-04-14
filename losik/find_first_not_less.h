@@ -1,12 +1,9 @@
 #ifndef _FIND_FIRST_NOT_LESS_H_
 #define _FIND_FIRST_NOT_LESS_H_
 
-#include <gtest/gtest.h>
 #include <functional>
-#include <algorithm>
-#include <iterator>
-#include <iostream>
-#include "comparator_mutator.h"
+
+namespace stlext {
 
 // Function returns Iterator to the first element in 
 // the [begin, end) not compared less than given element.
@@ -94,4 +91,5 @@ Iterator find_first_not_less(Iterator begin, Iterator end, const T& element) {
   return find_first_not_less(begin, end, element, std::less<T>());
 }
 
+};
 #endif
