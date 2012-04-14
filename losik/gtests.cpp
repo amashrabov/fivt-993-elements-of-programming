@@ -36,16 +36,16 @@ TEST (array_of_int, check_present_elements) {
 }
 
 TEST (array_of_int, not_present_less) {
-  EXPECT_EQ(find_first_not_less(arr, arr+10, -100 ), arr);
+  EXPECT_EQ(find_first_not_less(arr, arr + 10, -100 ), arr);
 }
 
 TEST (array_of_int, not_present_more) {
-  EXPECT_EQ(find_first_not_less(arr, arr+10, 100 ), arr+10);
+  EXPECT_EQ(find_first_not_less(arr, arr + 10, 100 ), arr + 10);
 }
 
 TEST (array_of_int, not_present_in_range) {
-  for (int i=0; i<5; i++) {
-    EXPECT_EQ(find_first_not_less(brr, brr+10, 2*i -1), brr+2*i);
+  for (int i = 0; i < 5; ++i) {
+    EXPECT_EQ(find_first_not_less(brr, brr + 10, 2 * i - 1), brr + 2 * i);
   }
 }
 
@@ -53,62 +53,82 @@ TEST (array_of_int, not_present_in_range) {
 TEST (array_of_int, random_equality_test) {
   std::vector<double> vec;  
 
-  for (int i=0; i<100000; i++)
-    vec.push_back(std::rand());
+  for (int i = 0; i < 100000; ++i)
+    vec.push_back((std::rand() % 1001) / 1000.0);
   
   std::sort(vec.begin(), vec.end(), std::greater<double>() );
 
-  for (int i=0; i<vec.size(); i++) {
+  for (int i=0; i<vec.size(); ++i) {
     EXPECT_EQ(*find_first_not_less(vec.begin(), vec.end(), vec[i], std::greater<double>()), vec[i]);
   }
 }
 
 TEST (lower_bound, single_elements) {
-  for (int i=0; i<10; i++)
-    for (int j=0; j<10; j++) {
+  for (int i = 0; i < 10; ++i)
+    for (int j = 0; j < 10; ++j) {
       int* answ;
-      EXPECT_EQ(answ = adviced_lower_bound(arr, arr+10, arr+j, arr[i]), arr+i);
-      visualize(arr, answ, arr+i);
+      EXPECT_EQ(answ = adviced_lower_bound(arr, arr + 10, arr + j, arr[i]), arr + i);
+      visualize(arr, answ, arr + i);
     }
 }
 
 TEST (lower_bound, multiple_elements) {
-  for (int i=1; i<5; i++) {
-    int* answ;
-    EXPECT_EQ(answ = adviced_lower_bound(brr, brr+10, brr, 2*i), brr+2*i);
-    visualize(brr, answ, brr+2*i);
+  for (int i = 1; i < 5; ++i) {
+    int* ans;
+    EXPECT_EQ(ans = adviced_lower_bound(brr, brr + 10, brr, 2 * i), brr + 2 * i);
+    visualize(brr, ans, brr + 2 * i);
   }
 }
 
 TEST (upper_bound, single_elements) {
-  for (int i=0; i<10; i++)
-    for (int j=0; j<10; j++) {
+  for (int i = 0; i < 10; ++i)
+    for (int j = 0; j < 10; ++j) {
       int* answ;
-      EXPECT_EQ(answ = adviced_upper_bound(arr, arr+10, arr+j, arr[i]), arr+i+1);
-      visualize(arr, answ, arr+i+1);
+      EXPECT_EQ(answ = adviced_upper_bound(arr, arr + 10, arr+j, arr[i]), arr + i + 1);
+      visualize(arr, answ, arr + i + 1);
     }
 }
 
 TEST (upper_bound, multiple_elements) {
-  for (int i=1; i<5; i++) {
+  for (int i = 1; i < 5; ++i) {
     int* answ;
-    EXPECT_EQ(answ = adviced_upper_bound(brr, brr+10, brr, 2*i), brr+2*(i+1));
-    visualize(brr, answ, brr+2*(i+1));
+    EXPECT_EQ(answ = adviced_upper_bound(brr, brr + 10, brr, 2 * i), brr + 2 * (i + 1));
+    visualize(brr, answ, brr + 2 * (i + 1));
   }
 }
 
 TEST (equal_range, single_elements) {
-  for (int i=0; i<10; i++)
-    for (int j=0; j<10; j++) {
-      std::cout << (adviced_equal_range(arr, arr+10, arr+j, arr[i]) == std::make_pair(arr+i,arr+i+1) ? "" : "FALSE!!!\n");
+  for (int i = 0; i < 10; ++i) {
+    for (int j = 0; j < 10; ++j) {
+      std::pair<int*, int*> ans = adviced_equal_range(arr, arr + 10, arr + j, arr[i]);
+      EXPECT_EQ(true, ans == std::make_pair(arr + i, arr + i + 1));
     }
-}
-
-TEST (equal_range, multiple_elements) {
-    // Couldnt get it to work =(((    
-    //EXPECT_EQ(adviced_equal_range(brr, brr+10, brr, 2*i), (std::make_pair(brr+2*i,brr+2*(i+1))) );
-  for (int i=1; i<5; i++) {
-      std::cout << (adviced_equal_range(brr, brr+10, brr, 2*i) == std::make_pair(brr+2*i,brr+2*(i+1) ) ? "" : "FALSE!!!\n");
   }
 }
 
+TEST (equal_range, multiple_elements) {
+  for (int i = 0; i < 5; ++i) {
+    for (int j = 0; j < 10; ++j) {
+      ASSERT_EQ(true, adviced_equal_range(brr, brr + 10, brr + j, 2 * i) == (std::make_pair(brr + 2 * i, brr + 2 * (i + 1))));
+    }
+  }
+}
+
+TEST (equal_range, incorrect_intervals) {
+  for (int b = 0; b < 10; ++b) {
+    for (int e = 0; e < 10; ++e) {
+      for (int a = 0; a < 10; ++a) {
+        for (int v = 0; v < 10; ++v) {
+	  std::pair<int*, int*> ans = adviced_equal_range(arr + b, arr + e, arr + a, v);
+	  // if searched value is in the interval
+	  // then should have found it
+	  if (b <= v && v < e) 
+	    ASSERT_EQ(true, std::make_pair(arr + v, arr + v + 1) == ans);
+	  // otherwise we shoould output an empty interval
+	  else
+	    ASSERT_EQ(ans.first, ans.second);
+	} 
+      }
+    }
+  }
+}
