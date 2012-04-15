@@ -1,5 +1,5 @@
-#ifndef  _SEGMENT_TREE_DPR-PAVLIN_
-#define  _SEGMENT_TREE_DPR-PAVLIN_
+#ifndef  _SEGMENT_TREE_ML_DPR-PAVLIN_
+#define  _SEGMENT_TREE_ML_DPR-PAVLIN_
 
 
 // compile with --std=c++0x
