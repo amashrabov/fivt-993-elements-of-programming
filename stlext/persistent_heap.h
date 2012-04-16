@@ -8,16 +8,14 @@
 
 namespace pds {
 
-
 template<class T>
 struct node {
 
-
   typedef node<T>* node_ptr;
 
-  class const_node_ptr : public std::shared_ptr<const node<T> > {
+  class const_node_ptr: public std::shared_ptr<const node<T> > {
 
-   public:
+    public:
 
     node_ptr clone() {
       node_ptr my_clone(new node(**this));
@@ -29,7 +27,7 @@ struct node {
       this->reset(new node(value));
     }
 
-   private:
+    private:
 
     typedef std::shared_ptr<const node<T> > base_class;
 
@@ -43,7 +41,7 @@ struct node {
 
   const_node_ptr child[2];
 
- private:
+  private:
 
   explicit node(const node& base_node) :
       value(base_node.value) {
@@ -59,12 +57,10 @@ struct node {
 
 };
 
-
-
 template<class T, class Comparator = std::less<T> >
 class persistent_heap {
 
- public:
+  public:
 
   typedef typename node<T>::node_ptr node_ptr;
   typedef typename node<T>::const_node_ptr const_node_ptr;
@@ -85,7 +81,6 @@ class persistent_heap {
     }
   }
 
-
   template<class Iterator>
   persistent_heap(Iterator begin, Iterator end, Comparator cmp) :
       cmp_(cmp), root_(), size_(0), top_size_(0) {
@@ -94,14 +89,13 @@ class persistent_heap {
     }
   }
 
-
   void push(T value) {
     if (root_ == NULL) {
       construct_root(value);
     } else {
       node_ptr new_root = root_.clone();
       router r(new_root, size_, top_size_);
-      while (!r.is_end()) {;
+      while (!r.is_end()) {
         swap_if_less(value, r.current_value());
         r.down();
       }
@@ -110,8 +104,6 @@ class persistent_heap {
       increment_size();
     }
   }
-
-
 
   void pop() {
     assert(!empty());
@@ -124,7 +116,7 @@ class persistent_heap {
       node_ptr& curr(new_root);
       while (curr->child[1] != NULL) {
         bool min_child_number = !(cmp_(curr->child[0]->value,
-                                   curr->child[1]->value));
+                                       curr->child[1]->value));
         T min_value(curr->child[min_child_number]->value);
         if (cmp_(min_value, value)) {
           curr->value = std::move(min_value);
@@ -156,7 +148,7 @@ class persistent_heap {
     return root_->value;
   }
 
- private:
+  private:
 
   Comparator cmp_;
   const_node_ptr root_;
@@ -208,7 +200,6 @@ class persistent_heap {
     return value;
   }
 
-
   /*
    * this class help us to come in last node
    */
@@ -248,7 +239,7 @@ class persistent_heap {
       return current_->value;
     }
 
-   private:
+    private:
 
     node_ptr current_;
 
