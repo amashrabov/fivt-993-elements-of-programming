@@ -5,7 +5,7 @@
 
 using namespace stlext;
 
-TEST(DISABLED_set, use_case_string) {
+TEST(set, use_case_string) {
   std::string ss("Some string");
   const char* hw = "Hello, World!";
   char* wtf = "What a Terrible Failure!"; 
@@ -36,9 +36,9 @@ TEST(DISABLED_set, use_case_string) {
   ASSERT_EQ(2u, avl.size());
   ASSERT_EQ(false, avl.contains(std::string("Hello, World!")));
 
-  avl.remove("Hello, World!");
+  avl.remove("Some string");
   EXPECT_EQ(1u, avl.size());
-  EXPECT_EQ(false, avl.contains(std::string("Hello, World!"))); 
+  EXPECT_EQ(false, avl.contains(std::string("Some string"))); 
 
   avl.remove("What a Terrible Failure!");
   ASSERT_EQ(0u, avl.size());
@@ -48,7 +48,7 @@ TEST(DISABLED_set, use_case_string) {
   ASSERT_EQ(0u, avl.size());
 }
 
-TEST(DISABLED_set, increasing_insertions) {
+TEST(set, increasing_insertions) {
   AvlSet<int> avl;
   
   // There should be assertion in invariant check
@@ -60,7 +60,7 @@ TEST(DISABLED_set, increasing_insertions) {
   }
 }
 
-TEST(DISABLED_map, decreasing_insertions) {
+TEST(map, decreasing_insertions) {
   AvlSet<int> avl;
 
   // There should be assertion in invariant check
@@ -72,15 +72,15 @@ TEST(DISABLED_map, decreasing_insertions) {
   }
 }
 
-TEST(DISABLED_map, random_insertions) {
+TEST(map, random_insertions) {
   AvlSet<int> avl;
   std::srand(123);  
 
   // There should be assertion in invariant check
   // if something goes wrong
   for (int i = 0; i < 100000; ++i) {
-    int r = std::rand();
-    avl.remove(r);
+    int r = std::rand() % 100000;
+    avl.remove(r);    
     ASSERT_EQ(false, avl.contains(r));
     avl.insert(r);
     ASSERT_EQ(true, avl.contains(r));
