@@ -66,6 +66,8 @@ class PersistantSegmentTree
 	private: 
 		TSum summator_;
 		TScalMult multiplier_;
+
+	
 		//typedef PersistantSegmentTree<T,TSum,TScalMult> PST;
 		
 		class Vertex
@@ -130,9 +132,9 @@ class PersistantSegmentTree
 		ptrvertex root_;
 		bool isPersistant_;		
 		
-		friend class Adder, Assigner, SumFinder;
+		//friend class Adder, Assigner, SumFinder;
 		
-		void init_(ptrvertex &vert, Interval interval, T &obj)
+		void init_(ptrvertex &vert, Interval interval, const T &obj)
 		{
 			if (interval.length() == 1)
 			{
@@ -141,8 +143,8 @@ class PersistantSegmentTree
 			else
 			{
 				vert = ptrvertex(new Vertex());
-				init_(vert->leftV, interval.left(), obj);
-				init_(vert->rightV, interval.right(), obj);
+				init_(vert->leftV, interval.leftHalf(), obj);
+				init_(vert->rightV, interval.rightHalf(), obj);
 				vert->sum = summator_(vert->leftV->sum, vert->rightV->sum);
 			}  
 		}
@@ -160,14 +162,14 @@ class PersistantSegmentTree
 			if (vert->valDef)
 			{
 				vert->valDef = false;
-				assignOnVertexSegment_(vert->leftV, vert->val, interval.left());
-				assignOnVertexSegment_(vert->rightV, vert->val, interval.right());
+				assignOnVertexSegment_(vert->leftV, vert->val, interval.leftHalf());
+				assignOnVertexSegment_(vert->rightV, vert->val, interval.rightHalf());
 			}
 			if (vert->deltaDef)
 			{
 				vert->deltaDef = false;
-				addOnVertexSegment_(vert->leftV, vert->val, interval.left());
-				addOnVertexSegment_(vert->rightV, vert->val, interval.right());
+				addOnVertexSegment_(vert->leftV, vert->val, interval.leftHalf());
+				addOnVertexSegment_(vert->rightV, vert->val, interval.rightHalf());
 			}
 			vert->sum = summator_(vert->leftV->sum, vert->rightV->sum);
 		}
@@ -187,14 +189,18 @@ class PersistantSegmentTree
 		class Adder
 		{
 		public:
-			T &obj;
-			Adder(T &obj)
-			:obj(obj)
+			T obj;
+			TSum summator_;
+			TScalMult multiplier_;
+			PersistantSegmentTree<T, TSum, TScalMult>* myTree;
+
+			Adder(const T &obj, PersistantSegmentTree<T, TSum, TScalMult>* myTree)
+			:obj(obj), myTree(myTree)
 			{}
 			void operator () (ptrvertex &vert, Interval &interval)
 			{
 				assert(vert != NULL);
-				clone_(vert); // for support of persistance
+				myTree->clone_(vert); // for support of persistance
 				
 				if (vert->valDef)
 					vert->val = summator_(vert->val, obj);
@@ -212,13 +218,17 @@ class PersistantSegmentTree
 		{
 		public:
 			T obj;
-			Assigner(T &obj)
-			:obj(obj)
+			TSum summator_;
+			TScalMult multiplier_;
+			PersistantSegmentTree<T, TSum, TScalMult>* myTree;
+
+			Assigner(const T &obj,  PersistantSegmentTree<T, TSum, TScalMult>* myTree)
+			:obj(obj), myTree(myTree)
 			{}
 			void operator () (ptrvertex &vert, Interval &interval)
 			{
 				assert(vert != NULL);
-				clone_(vert); // for support of persistance
+				myTree->clone_(vert); // for support of persistance
 					
 				vert->deltaDef = false;
 				vert->valDef = true;
@@ -231,7 +241,9 @@ class PersistantSegmentTree
 		public:
 			bool ansDef;
 			T ans;		
-			
+			TSum summator_;
+			TScalMult multiplier_;
+	
 			SumFinder()
 			{
 				ansDef = false;
@@ -248,8 +260,8 @@ class PersistantSegmentTree
 			}
 		};
 public:	
-		PersistantSegmentTree(bool isPersistant, size_t size, T &obj)
-		:isPersistant_(isPersistant), size_(size)
+		PersistantSegmentTree(size_t size, const T &obj)
+		:isPersistant_(true), size_(size)
 		{
 
 			//assert(persInd == PERSISTANT || persInd == NOTPERSISTANT);						
@@ -290,14 +302,14 @@ public:
 		void assign(size_t l, size_t r, const T &obj)
 		{
 			assert(0 <= l && l <= r && r < size_);
-			Assigner assigner(obj);
+			Assigner assigner(obj, this);
 			Interval query(l, r);
 			goDfs(root_, Interval(0, size_-1), query, assigner);				
 		}
 		void add(size_t l, size_t r, const T &obj)
 		{
 			assert(0 <= l && l <= r && r < size_);
-			Adder adder(obj);
+			Adder adder(obj, this);
 			Interval query(l, r);
 			goDfs(root_, Interval(0, size_-1), query, adder);						
 		}
