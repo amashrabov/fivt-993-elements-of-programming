@@ -10,15 +10,15 @@
 
 namespace pds {
 
-class heap_cheeker {
+class heap_checker {
 
  public:
 
-  heap_cheeker(const persistent_heap<int> heap, std::vector<int> difference) :
+  heap_checker(const persistent_heap<int> heap, std::vector<int> difference) :
       heap_(heap), difference_(difference) {
   }
 
-  heap_cheeker() :
+  heap_checker() :
       heap_(), difference_() {
   }
 
@@ -49,7 +49,7 @@ class heap_cheeker {
 
   }
 
-  bool cheek_and_delete() {
+  bool check_and_delete() {
     while (!heap_.empty()) {
       --difference_[heap_.top()];
       heap_.pop();
@@ -68,34 +68,34 @@ class heap_cheeker {
 
 
 TEST(persistent_heap_multitheaded, simple) {
-  heap_cheeker cheeker;
-  cheeker.random_fill(10000, 0);
-  heap_cheeker cheeker1 = cheeker;
-  heap_cheeker cheeker2 = cheeker;
-  std::thread th1(cheeker1, 100000, 1);
-  std::thread th2(cheeker2, 100000, 2);
+  heap_checker checker;
+  checker.random_fill(10000, 0);
+  heap_checker checker1 = checker;
+  heap_checker checker2 = checker;
+  std::thread th1(checker1, 100000, 1);
+  std::thread th2(checker2, 100000, 2);
   th1.join();
   th2.join();
-  ASSERT_TRUE(cheeker.cheek_and_delete());
-  ASSERT_TRUE(cheeker1.cheek_and_delete());
-  ASSERT_TRUE(cheeker2.cheek_and_delete());
+  ASSERT_TRUE(checker.check_and_delete());
+  ASSERT_TRUE(checker1.check_and_delete());
+  ASSERT_TRUE(checker2.check_and_delete());
 }
 
 
 TEST(persistent_heap_multitheaded, 10_threads) {
-  heap_cheeker cheeker;
-  cheeker.random_fill(10000, 0);
+  heap_checker checker;
+  checker.random_fill(10000, 0);
   std::vector<std::thread> threads(10);
-  std::vector<heap_cheeker> cheekers(10);
+  std::vector<heap_checker> checkers(10);
   for (int i = 0; i < 10; ++i) {
-    cheekers[i] = cheeker;
-    threads[i] = std::thread(cheekers[i], 100000, i);
+    checkers[i] = checker;
+    threads[i] = std::thread(checkers[i], 100000, i);
   }
   for (int i = 0; i < 10; ++i) {
     threads[i].join();
-    ASSERT_TRUE(cheekers[i].cheek_and_delete());
+    ASSERT_TRUE(checkers[i].check_and_delete());
   }
-  ASSERT_TRUE(cheeker.cheek_and_delete());
+  ASSERT_TRUE(checker.check_and_delete());
 }
 
 } // namespace pds
