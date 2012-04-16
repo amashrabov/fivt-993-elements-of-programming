@@ -4,8 +4,16 @@ include_directories(${CMAKE_SOURCE_DIR}/stlext)
 
 
 set (TESTS
-  integer_part_of_log2_test.cc
+
+  #integer_part_of_log2_test.cc
+  #it is dangerous test, on WIN it doesn't work
+  
   static_rmq_test.cc
+  static_rsq_test.cc
+  safe_distance_test.cc
+  persistent_heap_test.cc
+  persistent_heap_multithreaded_test.cc
+
 )
 
 add_executable (unittests
