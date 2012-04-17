@@ -1,33 +1,33 @@
 #include <memory>
+#include <functional>
 #include "avl_tree_node.hpp"
 
 namespace stlext {
 
-template<class T>
+template<class T, class Comparator = std::less<T> >
 class AvlSet {
  public:
-  typedef typename AvlTreeNode<T>::node_ptr   node_ptr;
-  typedef typename AvlTreeNode<T>::node_cptr  node_cptr;
-  typedef typename AvlTreeNode<T>::node_sptr  node_sptr;
-  typedef typename AvlTreeNode<T>::node_csptr node_csptr;
+  typedef typename AvlTreeNode<T, Comparator>::node_ptr   node_ptr;
+  typedef typename AvlTreeNode<T, Comparator>::node_cptr  node_cptr;
+  typedef typename AvlTreeNode<T, Comparator>::node_sptr  node_sptr;
+  typedef typename AvlTreeNode<T, Comparator>::node_csptr node_csptr;
 
   AvlSet(): size_(0) {}
   bool insert(const T &value);
   bool remove(const T &value);
-  bool contains(const T &value);
+  bool contains(const T &value) const;
 
   size_t size() const;
-
 
  private:
   node_csptr root_;
   size_t size_;
 };
 
-template<class T>
-bool AvlSet<T>::insert(const T& value) {
+template<class T, class Comparator>
+bool AvlSet<T, Comparator>::insert(const T& value) {
   if (root_.get() == NULL) {
-    root_ = std::make_shared<const AvlTreeNode<T> >(value);
+    root_ = std::make_shared<const AvlTreeNode<T, Comparator> >(value);
     ++size_;
     return true;
   }
@@ -40,16 +40,16 @@ bool AvlSet<T>::insert(const T& value) {
   return false;
 }
 
-template<class T>
-bool AvlSet<T>::contains(const T& value) {
+template<class T, class Comparator>
+bool AvlSet<T, Comparator>::contains(const T& value) const {
   if (root_.get() == NULL)
     return false;
 
-  return const_cast<node_ptr>(root_.get())->contains(root_, value);
+  return root_->contains(root_, value);
 }
 
-template<class T>
-bool AvlSet<T>::remove(const T& value) {
+template<class T, class Comparator>
+bool AvlSet<T, Comparator>::remove(const T& value) {
   if (root_.get() == NULL)
     return false;
 
@@ -62,8 +62,8 @@ bool AvlSet<T>::remove(const T& value) {
   return ans;
 }
 
-template<class T>
-size_t AvlSet<T>::size() const {
+template<class T, class Comparator>
+size_t AvlSet<T, Comparator>::size() const {
   return size_;
 }
 

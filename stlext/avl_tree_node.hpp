@@ -10,24 +10,25 @@ namespace stlext {
 // latest stable release of GCC for Gentoo users).
 
   
-template<class T>
+template<class T, class Comparator>
 class AvlTreeNode {
  public:
 
-  typedef AvlTreeNode<T>* node_ptr;
-  typedef AvlTreeNode<T>* const node_cptr;
-  typedef std::shared_ptr<AvlTreeNode<T> > node_sptr;
-  typedef std::shared_ptr<const AvlTreeNode<T> > node_csptr;
+  typedef AvlTreeNode<T, Comparator>* node_ptr;
+  typedef AvlTreeNode<T, Comparator>* const node_cptr;
+  typedef std::shared_ptr<AvlTreeNode<T, Comparator> > node_sptr;
+  typedef std::shared_ptr<const AvlTreeNode<T, Comparator> > node_csptr;
 
   template <class ... Args>
   AvlTreeNode(Args... args):
     value_(args...),
-    height_(1) {}
+    height_(1),
+    compare_() {}
 
   node_csptr& find(node_csptr &ref, const T &value);
-  bool contains(node_csptr &ref, const T &value);
+  bool contains(const node_csptr &ref, const T &value) const;
   bool insert(node_csptr &ref, const T &value);
-  void find_and_remove(node_csptr &ref, const T &value, bool &remove);  
+  void find_and_remove(node_csptr &ref, const T &value, bool &remove);
 
  private:
   int neg(int i, bool b);
@@ -43,27 +44,31 @@ class AvlTreeNode {
   void big_rotation(node_csptr &ref, bool inverse = false);
 
   // Removal related functions
-  void remove_rec(node_csptr &ref, T &val, int dir, bool &remove);
+  void remove_rec(node_csptr &ref, T &val, int dir);
 
   // Debug related functions
-  void invariant_check(node_csptr &ref) const;
+  void invariant_check(const node_csptr &ref) const;
   
+  Comparator compare_;
   int height_;
   T value_;
-  std::shared_ptr<const AvlTreeNode<T> > child_[2];
+  node_csptr child_[2];
 };
 
+
+
+
 // Reverts the last bit of given number
-template<class T>
-int AvlTreeNode<T>::neg(int i, bool b) {
+template<class T, class Comparator>
+int AvlTreeNode<T, Comparator>::neg(int i, bool b) {
   if (b)
     i ^= 0x01;
 
   return i;
 }
 
-template<class T>
-void AvlTreeNode<T>::invariant_check(node_csptr &ref) const {
+template<class T, class Comparator>
+void AvlTreeNode<T, Comparator>::invariant_check(const node_csptr &ref) const {
   EXPECT_LT(get_factor(ref), 2);
   EXPECT_GT(get_factor(ref), -2);
 }
@@ -77,20 +82,20 @@ void AvlTreeNode<T>::invariant_check(node_csptr &ref) const {
 // Considering subtree a valid AVL tree
 // returns true if value is present in 
 // this subtree and false otherwise.
-template<class T>
-bool AvlTreeNode<T>::contains(node_csptr &ref, const T &value) {
+template<class T, class Comparator>
+bool AvlTreeNode<T, Comparator>::contains(const node_csptr &ref, const T &value) const {
   invariant_check(ref);
 
   if (value_ == value)
     return true;
 
-  size_t index = (value < value_)? 0 : 1;
+  size_t index = (compare_(value, value_))? 0 : 1;
   auto& child = child_[index];
   
   if (child.get() == NULL)
     return false;
 
-  return const_cast<node_ptr>(child.get())->contains(child, value);
+  return child->contains(child, value);
 }
 
 
@@ -103,17 +108,17 @@ bool AvlTreeNode<T>::contains(node_csptr &ref, const T &value) {
 // ref is updated.
 // Returns true if new is element was
 // inserted, false otherwise.
-template<class T>
-bool AvlTreeNode<T>::insert(node_csptr &ref, const T &value) {
+template<class T, class Comparator>
+bool AvlTreeNode<T, Comparator>::insert(node_csptr &ref, const T &value) {
   if (value_ == value)
     return false;
 
-  size_t index = (value < value_)? 0 : 1;
+  size_t index = (compare_(value, value_))? 0 : 1;
   auto& child = child_[index];
   bool ans;
 
   if (child.get() == NULL) {
-    child = std::make_shared<const AvlTreeNode<T> >(value);
+    child = std::make_shared<const AvlTreeNode<T, Comparator> >(value);
     ans = true;  
   }
   else {
@@ -137,8 +142,8 @@ bool AvlTreeNode<T>::insert(node_csptr &ref, const T &value) {
 // ref is updated.
 // If sucessfully removed - remove is true
 // remove is false otherwise.
-template<class T>
-void AvlTreeNode<T>::find_and_remove(node_csptr &ref, const T &value, bool &remove) {
+template<class T, class Comparator>
+void AvlTreeNode<T, Comparator>::find_and_remove(node_csptr &ref, const T &value, bool &remove) {
   // We are in the node we want to delete
   remove = false;
   if (value_ == value) {
@@ -154,11 +159,12 @@ void AvlTreeNode<T>::find_and_remove(node_csptr &ref, const T &value, bool &remo
       int index = (get_factor(ref) > 0) ? 0 : 1;
       int dir =   (get_factor(ref) > 0) ? 1 : 0;
       auto& child = child_[index];
-      const_cast<node_ptr>(child.get())->remove_rec(child, value_, dir, remove);
+      remove = true;
+      const_cast<node_ptr>(child.get())->remove_rec(child, value_, dir);
     }
   }
   else {
-    size_t index = (value < value_)? 0 : 1;
+    size_t index = (compare_(value, value_))? 0 : 1;
     //auto& child = child_[index];
    
     if (child_[index].get() != NULL)
@@ -174,9 +180,8 @@ void AvlTreeNode<T>::find_and_remove(node_csptr &ref, const T &value, bool &remo
 // algorithm.
 // Reference to subtree, passed through
 // ref is updated.
-template<class T>
-void AvlTreeNode<T>::remove_rec(node_csptr &ref, T &val, int dir, bool &remove) {
-  remove = false;
+template<class T, class Comparator>
+void AvlTreeNode<T, Comparator>::remove_rec(node_csptr &ref, T &val, int dir) {
   int child_index = dir;
   
   // If no further movement in given direction
@@ -187,42 +192,40 @@ void AvlTreeNode<T>::remove_rec(node_csptr &ref, T &val, int dir, bool &remove) 
 
     // we can be at the bottom of recursion
     if (height_ == 1) {
-      remove = true;
       ref = node_csptr();
       return;
     }
     else {
-      remove = true;
       auto& child = const_cast<node_ptr>(ref.get())->child_[neg(dir, true)];
       value_ = std::move(const_cast<node_ptr>(child.get())->value_);
       child = node_csptr();
     }
   }
   else {
-    const_cast<node_ptr>(child_[dir].get())->remove_rec(child_[dir], val, dir, remove);
+    const_cast<node_ptr>(child_[dir].get())->remove_rec(child_[dir], val, dir);
   }
-  update_height(ref);
+
   balance(ref);
 }
 
 
 // BALANCE RELATED SECTION
 
-template<class T>
-int AvlTreeNode<T>::get_height(const node_csptr &node) const {
+template<class T, class Comparator>
+int AvlTreeNode<T, Comparator>::get_height(const node_csptr &node) const {
   return (node.get() == NULL)? 0 : node->height_;
 }
 
-template<class T>
-int AvlTreeNode<T>::get_factor(const node_csptr &node) const {
+template<class T, class Comparator>
+int AvlTreeNode<T, Comparator>::get_factor(const node_csptr &node) const {
   if (node.get() == NULL)
     return 0;
 
   return get_height(node->child_[0]) - get_height(node->child_[1]);
 }
 
-template<class T>
-void AvlTreeNode<T>::update_height(const node_csptr &ref) {
+template<class T, class Comparator>
+void AvlTreeNode<T, Comparator>::update_height(const node_csptr &ref) {
   if (ref.get() == NULL)
     return;
 
@@ -231,11 +234,9 @@ void AvlTreeNode<T>::update_height(const node_csptr &ref) {
   const_cast<node_ptr>(ref.get())->height_ = std::max(l_h, r_h) + 1;
 }
 
-template<class T>
-void AvlTreeNode<T>::balance(node_csptr &ref, bool inverse) {
-
+template<class T, class Comparator>
+void AvlTreeNode<T, Comparator>::balance(node_csptr &ref, bool inverse) {
   update_height(ref);
-
 
   if (get_factor(ref) <= -2) {
     if (get_factor(child_[1]) <= 0) {
@@ -253,8 +254,6 @@ void AvlTreeNode<T>::balance(node_csptr &ref, bool inverse) {
       big_rotation(ref, true);
     } 
   }  
-
-  //update_height(ref);
 }
 
 // root             root
@@ -265,8 +264,8 @@ void AvlTreeNode<T>::balance(node_csptr &ref, bool inverse) {
 //      b         / \   R
 //     / \       L   C
 //    C   R
-template<class T>
-void AvlTreeNode<T>::small_rotation(node_csptr &ref, bool inverse) {
+template<class T, class Comparator>
+void AvlTreeNode<T, Comparator>::small_rotation(node_csptr &ref, bool inverse) {
 
   // root        root  a_tmp     
   //   |            \ /  
@@ -288,7 +287,6 @@ void AvlTreeNode<T>::small_rotation(node_csptr &ref, bool inverse) {
   //     / \            / \
   //    C   R          ?   R
   const_cast<node_ptr>(ref.get())->child_[neg(1, inverse)] = std::move(b_tmp->child_[neg(0, inverse)]);
-  //ref->child_[neg(1, inverse)] = std::move(b_tmp->child_[neg(0, inverse)]);
   ref = std::move(b_tmp);
 
   // a_tmp            root
@@ -300,7 +298,6 @@ void AvlTreeNode<T>::small_rotation(node_csptr &ref, bool inverse) {
   //      / \       L   C
   //     ?   R
   const_cast<node_ptr>(ref.get())->child_[neg(0, inverse)] = std::move(a_tmp);
-  //ref->child_[neg(0, inverse)] = std::move(a_tmp);
  
   // Updating heights
   update_height(ref->child_[neg(0, inverse)]);
@@ -308,8 +305,8 @@ void AvlTreeNode<T>::small_rotation(node_csptr &ref, bool inverse) {
 }
 
 
-template<class T>
-void AvlTreeNode<T>::big_rotation(node_csptr &ref, bool inverse) {
+template<class T, class Comparator>
+void AvlTreeNode<T, Comparator>::big_rotation(node_csptr &ref, bool inverse) {
   // root        root  a_tmp     
   //   |            \ /  
   //   a             a   
@@ -340,9 +337,6 @@ void AvlTreeNode<T>::big_rotation(node_csptr &ref, bool inverse) {
   // root_child is a now
   const_cast<node_ptr>(ref.get())->child_[neg(1, inverse)] = std::move(c_tmp->child_[neg(0, inverse)]);
   const_cast<node_ptr>(b_tmp.get())->child_[neg(0, inverse)] = std::move(c_tmp->child_[neg(1, inverse)]);
-  //ref->child_[neg(1, inverse)] = std::move(c_tmp->child_[neg(0, inverse)]);
-  //b_tmp->child_[neg(0, inverse)] = std::move(c_tmp->child_[neg(1, inverse)]);
-  // root child is c now
   ref = std::move(c_tmp);
 
   //   a_tmp                  root
@@ -356,15 +350,10 @@ void AvlTreeNode<T>::big_rotation(node_csptr &ref, bool inverse) {
   //       c
   //      / \
   //     ?   N
-  const_cast<AvlTreeNode<T>*>(ref.get())->child_[inverse? 1 : 0] = std::move(a_tmp);
-  const_cast<AvlTreeNode<T>*>(ref.get())->child_[inverse? 0 : 1] = std::move(b_tmp);
-  //ref->child_[neg(0, inverse)] = std::move(a_tmp);
-  //ref->child_[neg(1, inverse)] = std::move(b_tmp);
+  const_cast<node_ptr>(ref.get())->child_[inverse? 1 : 0] = std::move(a_tmp);
+  const_cast<node_ptr>(ref.get())->child_[inverse? 0 : 1] = std::move(b_tmp);
 
   // Updating heights
-  //const_cast<AvlTreeNode<T>*>(root_child->child_[inverse? 1 : 0].get())->update_height();
-  //const_cast<AvlTreeNode<T>*>(root_child->child_[inverse? 0 : 1].get())->update_height();
-  //const_cast<AvlTreeNode<T>*>(root_child.get())->update_height();
   update_height(ref->child_[inverse? 1 : 0]);
   update_height(ref->child_[inverse? 0 : 1]);
   update_height(ref);
