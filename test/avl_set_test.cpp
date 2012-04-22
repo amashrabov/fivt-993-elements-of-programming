@@ -60,7 +60,7 @@ TEST(set, increasing_insertions) {
   }
 }
 
-TEST(map, decreasing_insertions) {
+TEST(set, decreasing_insertions) {
   AvlSet<int> avl;
 
   // There should be assertion in invariant check
@@ -72,7 +72,7 @@ TEST(map, decreasing_insertions) {
   }
 }
 
-TEST(map, random_insertions) {
+TEST(set, random_insertions) {
   AvlSet<int> avl;
   std::srand(123);  
 
@@ -85,5 +85,64 @@ TEST(map, random_insertions) {
     avl.insert(r);
     ASSERT_EQ(true, avl.contains(r));
   }
+}
+
+TEST(set, persistent_insertions) {
+  // 1 = {}
+  AvlSet<double> avl_v1;
+  
+  // 1 = 2 = {}
+  AvlSet<double> avl_v2 = avl_v1;
+  ASSERT_EQ(0u, avl_v2.size());
+
+  // 1 = {3.1415926} 2 = {}
+  avl_v1.insert(3.1415926);
+  ASSERT_EQ(1u, avl_v1.size());
+  ASSERT_EQ(0u, avl_v2.size());
+
+  // 1 = {3.1415926} 2 = 3 = {}
+  AvlSet<double>avl_v3 = avl_v2;
+  ASSERT_EQ(1u, avl_v1.size());
+  ASSERT_EQ(0u, avl_v2.size());
+  ASSERT_EQ(0u, avl_v3.size());
+
+  // 1 = {3.1415926} 2 = {} 3 = {2.7182818}
+  avl_v3.insert(2.7182818);
+  ASSERT_EQ(1u, avl_v1.size());
+  ASSERT_EQ(0u, avl_v2.size());
+  ASSERT_EQ(1u, avl_v3.size());
+
+  // 1 = {3.1415926, 2.7182818} 2 = {} 3 = {2.7182818}
+  avl_v1.insert(2.7182818);
+  ASSERT_EQ(2u, avl_v1.size());
+  ASSERT_EQ(0u, avl_v2.size());
+  ASSERT_EQ(1u, avl_v3.size());
+
+  ASSERT_EQ(true, avl_v1.contains(3.1415926));
+  ASSERT_EQ(false, avl_v2.contains(3.1415926));
+  ASSERT_EQ(false, avl_v3.contains(3.1415926));
+
+  ASSERT_EQ(true, avl_v1.contains(2.7182818));
+  ASSERT_EQ(false, avl_v2.contains(2.7182818));
+  ASSERT_EQ(true, avl_v3.contains(2.7182818));
+
+  // 1 = {3.1415926, 2.7182818} 2 = {3.1415926, 2.7182818, 1.41421356} 3 = {2.7182818}
+  avl_v2 = avl_v1;
+  avl_v2.insert(1.41421356);
+  ASSERT_EQ(2u, avl_v1.size());
+  ASSERT_EQ(3u, avl_v2.size());
+  ASSERT_EQ(1u, avl_v3.size());
+
+  ASSERT_EQ(true, avl_v1.contains(3.1415926));
+  ASSERT_EQ(true, avl_v2.contains(3.1415926));
+  ASSERT_EQ(false, avl_v3.contains(3.1415926));
+
+  ASSERT_EQ(true, avl_v1.contains(2.7182818));
+  ASSERT_EQ(true, avl_v2.contains(2.7182818));
+  ASSERT_EQ(true, avl_v3.contains(2.7182818));
+
+  ASSERT_EQ(false, avl_v1.contains(1.41421356));
+  ASSERT_EQ(true, avl_v2.contains(1.41421356));
+  ASSERT_EQ(false, avl_v3.contains(1.41421356));
 }
 
