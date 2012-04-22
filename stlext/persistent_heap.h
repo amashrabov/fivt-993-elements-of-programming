@@ -18,9 +18,15 @@ struct node {
     public:
 
     node_ptr clone() {
-      node_ptr my_clone(new node(**this));
-      this->base_class::operator=(static_cast<base_class>(my_clone));
-      return my_clone;
+      if (this->unique()) {
+        //std::cout << "unique" << std::endl;
+        return const_cast<node_ptr>((this->get()));
+      } else {
+        //std::cout << "copy" << std::endl;
+        node_ptr my_clone(new node(**this));
+        this->base_class::operator=(static_cast<base_class>(my_clone));
+        return my_clone;
+      }
     }
 
     void make_leaf(const T& value) {
