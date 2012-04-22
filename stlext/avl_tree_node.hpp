@@ -3,6 +3,7 @@
 #include <iostream>
 #include <gtest/gtest.h>
 #include "copier.cpp"
+#include "pseudo_copier.cpp"
 
 namespace stlext {
   
@@ -44,12 +45,6 @@ class AvlTreeNode {
     child_[1] = node.child_[1];
   }
 
-  const T& get_value() const;
-
-  // PRIVATE ? O_O
-
-  node_csptr& find(node_csptr &ref, const T &value);
-  
   int neg(int i, bool b);
 
   // Const functions
@@ -71,13 +66,6 @@ class AvlTreeNode {
   node_csptr child_[2];
   Comparator compare_;
 };
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-template<class T, class Comparator>
-const T& AvlTreeNode<T, Comparator>::get_value() const {
-  return value_;
-}
 
 // Reverts the last bit of given number
 template<class T, class Comparator>
@@ -120,7 +108,7 @@ void AvlTreeNode<T, Comparator>::update_height(node_csptr &ref) {
   int new_height = std::max(l_h, r_h) + 1;
   
   if (ref->height_ != new_height) {
-    ref = Copier::copy(ref);
+    ref = PseudoCopier::copy(ref);
     const_cast<node_ptr>(ref.get())->height_ = new_height;
   }
 }
@@ -170,8 +158,8 @@ void AvlTreeNode<T, Comparator>::small_rotation(node_csptr &ref, bool inverse) {
   //     / \           / \
   //    C   R         C   R
 
-  auto a_tmp = Copier::copy(ref);
-  auto b_tmp = Copier::copy(ref->child_[neg(1, inverse)]);
+  auto a_tmp = PseudoCopier::copy(ref);
+  auto b_tmp = PseudoCopier::copy(ref->child_[neg(1, inverse)]);
 
   //root a_tmp     a_tmp     
   //  \ /            |  
@@ -213,9 +201,9 @@ void AvlTreeNode<T, Comparator>::big_rotation(node_csptr &ref, bool inverse) {
   //   / \           c 
   //  M   N         / \
   //               M   N
-  auto a_tmp = Copier::copy(ref);
-  auto b_tmp = Copier::copy(ref->child_[inverse? 0 : 1]);
-  auto c_tmp = Copier::copy(b_tmp->child_[inverse? 1 : 0]);
+  auto a_tmp = PseudoCopier::copy(ref);
+  auto b_tmp = PseudoCopier::copy(ref->child_[inverse? 0 : 1]);
+  auto c_tmp = PseudoCopier::copy(b_tmp->child_[inverse? 1 : 0]);
 
   //  root a_tmp         a_tmp 
   //     \ /               |

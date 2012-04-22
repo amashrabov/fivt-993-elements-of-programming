@@ -3,6 +3,7 @@
 #include <stack>
 #include "avl_tree_node.hpp"
 #include "copier.cpp"
+#include "pseudo_copier.cpp"
 
 namespace stlext {
 
@@ -73,7 +74,7 @@ class avl_tree_const_iterator: public std::iterator<std::forward_iterator_tag, A
    node_csptr node_;
 };*/
 
-template<class T, class Comparator = std::less<T> , class NodeCopier = Copier>
+template<class T, class Comparator = std::less<T> , class NodeCopier = PseudoCopier>
 class AvlSet {
  public:
   typedef AvlTreeNode<T, Comparator> node_t;
@@ -162,6 +163,8 @@ bool AvlSet<T, Comparator, NodeCopier>::insert(const T &value, node_csptr &ref) 
   // this subtree.
   if (child_cpy != ref->child_[index]) {
     // Copying the node
+    // TODO do we need copier here if new shared pointer
+    // is constructed anyways?
     ref = std::make_shared<const node_t>(NodeCopier::copy(*ref));
     // Updating the node
     const_cast<node_ptr>(ref.get())->child_[index] = child_cpy;
@@ -203,10 +206,13 @@ bool AvlSet<T, Comparator, NodeCopier>::remove(const T &value, node_csptr &ref) 
     // this substitution is initiated.
     else {  
       int index = (AvlTreeNode<T, Comparator>::get_factor(ref) > 0) ? 0 : 1;
-      int dir =   (AvlTreeNode<T, Comparator>::get_factor(ref) > 0) ? 1 : 0;
+      int dir = index ^ 0x01;
       // TODO the first time writing like this. If anything happens - check this line
-      replace(const_cast<node_csptr&>(ref->child_[index]), const_cast<T&>(ref->value_), dir);
-      const_cast<node_ptr>(ref.get())->balance(ref);
+      node_t new_node = Copier::copy(*ref);
+
+      replace(new_node.child_[index], new_node.value_, dir);
+      ref = std::make_shared<node_t>(new_node);
+      new_node.balance(ref);
     }
 
     return true;
@@ -217,8 +223,17 @@ bool AvlSet<T, Comparator, NodeCopier>::remove(const T &value, node_csptr &ref) 
   bool answ = false;
   size_t index = (compare_(value, ref->value_))? 0 : 1; 
   if (ref->child_[index].get() != NULL) {
-    answ = remove(value, const_cast<node_csptr&>(ref->child_[index]));
+    node_csptr child_cpy = ref->child_[index];
+    answ = remove(value, child_cpy);
+
+    // Checking if we have to update current 
+    if (child_cpy != ref->child_[index]) {
+      node_t new_node = Copier::copy(*ref);
+      new_node.child_[index] = child_cpy;
+      ref = std::make_shared<node_t>(new_node);
+    }
   }
+
   const_cast<node_ptr>(ref.get())->balance(ref);
   return answ;
 }
@@ -231,7 +246,7 @@ void AvlSet<T, Comparator, NodeCopier>::replace(node_csptr &ref, T &value, int d
   // If no further movement in given direction
   // is possible - we must perform some actions
   if (ref->child_[dir].get() == NULL) {
-    // pushing up the value
+    // The value is not needed here
     value = std::move(ref->value_);
 
     // If the replacement is a leaf
@@ -243,17 +258,23 @@ void AvlSet<T, Comparator, NodeCopier>::replace(node_csptr &ref, T &value, int d
     // node only has one child.We put
     // this child into parentr's place.
     else {
+      // This reverts the last bit of dir.
+      // It converts 1 to 0 and 0 to 1.
       ref = ref->child_[dir ^= 0x01];
     }
 
+    // Everything we wanted to do is done
     return;
   }
 
-  // We go further if we can
-  replace(const_cast<node_csptr&>(ref->child_[dir]), value, dir);
-  const_cast<node_ptr>(ref.get())->balance(ref);
+  // Going further till we reach the bottom.
+  // We have to update all the nodes cause
+  // replacing element will always be deleted.
+  node_t new_node = Copier::copy(*ref);
+  replace(new_node.child_[dir], value, dir);
+  ref = std::make_shared<node_t>(new_node);
+  new_node.balance(ref);
 }
-
 
 
 template<class T, class Comparator, class NodeCopier>
