@@ -1,103 +1,30 @@
+#ifndef _AVL_SET_HPP_
+#define _AVL_SET_HPP_
+
 #include <memory>
 #include <functional>
-#include <stack>
 #include "avl_tree_node.hpp"
-#include "copier.cpp"
 #include "pseudo_copier.cpp"
 
 namespace stlext {
 
-// TODO the Comparator template would not be needed
-/*template<class T, class Comparator>
-class avl_tree_const_iterator: public std::iterator<std::forward_iterator_tag, AvlTreeNode<T, Comparator> > {
-  public:
-   typedef AvlTreeNode<T, Comparator> node_t;
-   typedef typename node_t::node_csptr node_csptr;
-
-   avl_tree_const_iterator(const avl_tree_const_iterator& it):
-     root_(it.root_), node_(it.node_) {}
-
-   avl_tree_const_iterator(const node_csptr& root, const node_csptr& node):
-     root_(root), node_(node) {}
-
-   avl_tree_const_iterator& operator++() {
-     auto node = root_;
-
-     while (true) {
-       if (node.get() == NULL) {
-         return;
- 
-         size_t index = (node->value < node_->value_)? 1 : 0;
-         if (node->child_[index]->value_ == node_->value) {
-           node_ = edge_leaf(node->child[index], 0);
-           return;
-         }
-       }
-     }
-
-     return *this;
-   }
-
-   static avl_tree_const_iterator edge_leaf(const node_csptr& tree_root, int dir) {
-     auto node = tree_root;
-     
-     if (node.get() == NULL)
-       return node;
-
-     while(node->child_[dir].get() != NULL) {
-       node = node->child_[dir];
-     }
-
-     return node;
-   }
-
-   avl_tree_const_iterator operator++(int) {
-     avl_tree_const_iterator tmp(*this); 
-     operator++(); 
-     return tmp;
-   }
-
-   bool operator==(const avl_tree_const_iterator& it) {
-     return (root_ == it.root_ && node_ == it.node_);
-   }
-
-   bool operator!=(const avl_tree_const_iterator& it) {
-     return !operator==(it);
-   }
-
-   const node_t& operator*() {
-     return node_->value;
-   }
-
-  private:
-   node_csptr root_;
-   node_csptr node_;
-};*/
-
 template<class T, class Comparator = std::less<T> , class NodeCopier = PseudoCopier>
-class AvlSet {
+class avl_set {
  public:
-  typedef AvlTreeNode<T, Comparator> node_t;
+  typedef avl_tree_node<T> node_t;
   typedef typename node_t::node_ptr   node_ptr;
   typedef typename node_t::node_cptr  node_cptr;
   typedef typename node_t::node_sptr  node_sptr;
   typedef typename node_t::node_csptr node_csptr;
 
-  void print() const {
-    if (root_.get() != NULL) {
-      std::cout << std::endl << "#PRINTING" << std::endl;
-      root_->print();
-    }
-  }
 
-
-  AvlSet(): 
+  avl_set(): 
     size_(0) {}
-  AvlSet(const AvlSet<T, Comparator, Copier> &set):
+
+  avl_set(const avl_set<T, Comparator, NodeCopier> &set):
     size_(set.size_),
     root_(set.root_) {}
  
-  
   bool insert(const T &value);
   bool remove(const T &value);
   bool contains(const T &value) const;
@@ -109,14 +36,39 @@ class AvlSet {
   bool remove(const T &value, node_csptr &ref);
   void replace(node_csptr &ref, T &value, int dir);
 
+  void balance(node_csptr &ref);
+  void small_rotation(node_csptr &ref, bool inverse = false);
+  void big_rotation(node_csptr &ref, bool inverse = false);
+  void update_height(node_csptr &ref);  
+
+  int get_factor(const node_csptr &node) const;
+  int get_height(const node_csptr &node) const;
+
+  int neg(int i, bool inverse) {
+    return inverse? i ^ 0x01 : i;
+  }
+
   node_csptr root_;
   size_t size_;
   Comparator compare_;
 };
 
+template<class T, class Comparator, class NodeCopier>
+int avl_set<T, Comparator, NodeCopier>::get_height(const node_csptr &node) const {
+  return (node.get() == NULL)? 0 : node->height_;
+}
 
 template<class T, class Comparator, class NodeCopier>
-bool AvlSet<T, Comparator, NodeCopier>::contains(const T& value) const {
+int avl_set<T, Comparator, NodeCopier>::get_factor(const node_csptr &node) const {
+  if (node.get() == NULL)
+    return 0;
+
+  return get_height(node->child_[0]) - get_height(node->child_[1]);
+}
+
+
+template<class T, class Comparator, class NodeCopier>
+bool avl_set<T, Comparator, NodeCopier>::contains(const T& value) const {
   auto node = root_;
 
   while (true) {
@@ -132,13 +84,14 @@ bool AvlSet<T, Comparator, NodeCopier>::contains(const T& value) const {
 }
 
 template<class T, class Comparator, class NodeCopier>
-bool AvlSet<T, Comparator, NodeCopier>::insert(const T &value) {
+bool avl_set<T, Comparator, NodeCopier>::insert(const T &value) {
   return insert(value, root_);
 }
 
 
+
 template<class T, class Comparator, class NodeCopier>
-bool AvlSet<T, Comparator, NodeCopier>::insert(const T &value, node_csptr &ref) {
+bool avl_set<T, Comparator, NodeCopier>::insert(const T &value, node_csptr &ref) {
   // The place to insert is reached
   // Creationg new leaf here.
   if (ref.get() == NULL) {
@@ -169,7 +122,7 @@ bool AvlSet<T, Comparator, NodeCopier>::insert(const T &value, node_csptr &ref) 
     // Updating the node
     const_cast<node_ptr>(ref.get())->child_[index] = child_cpy;
     // Balancing subtree of the node
-    const_cast<node_ptr>(ref.get())->balance(ref);
+    balance(ref);
   }
 
   return answ;
@@ -177,7 +130,7 @@ bool AvlSet<T, Comparator, NodeCopier>::insert(const T &value, node_csptr &ref) 
 
 
 template<class T, class Comparator, class NodeCopier>
-bool AvlSet<T, Comparator, NodeCopier>::remove(const T& value) {
+bool avl_set<T, Comparator, NodeCopier>::remove(const T& value) {
   if (root_.get() == NULL) {
     return false;
   }
@@ -192,7 +145,7 @@ bool AvlSet<T, Comparator, NodeCopier>::remove(const T& value) {
 }
 
 template<class T, class Comparator, class NodeCopier>
-bool AvlSet<T, Comparator, NodeCopier>::remove(const T &value, node_csptr &ref) {
+bool avl_set<T, Comparator, NodeCopier>::remove(const T &value, node_csptr &ref) {
   // We are in the node we want to delete
   // So we delete it.
   if (ref->value_ == value) {
@@ -205,14 +158,14 @@ bool AvlSet<T, Comparator, NodeCopier>::remove(const T &value, node_csptr &ref) 
     // for this node is needed. Searching for
     // this substitution is initiated.
     else {  
-      int index = (AvlTreeNode<T, Comparator>::get_factor(ref) > 0) ? 0 : 1;
+      int index = (get_factor(ref) > 0) ? 0 : 1;
       int dir = index ^ 0x01;
       // TODO the first time writing like this. If anything happens - check this line
-      node_t new_node = Copier::copy(*ref);
+      node_t new_node = NodeCopier::copy(*ref);
 
       replace(new_node.child_[index], new_node.value_, dir);
       ref = std::make_shared<node_t>(new_node);
-      new_node.balance(ref);
+      balance(ref);
     }
 
     return true;
@@ -228,19 +181,19 @@ bool AvlSet<T, Comparator, NodeCopier>::remove(const T &value, node_csptr &ref) 
 
     // Checking if we have to update current 
     if (child_cpy != ref->child_[index]) {
-      node_t new_node = Copier::copy(*ref);
+      node_t new_node = NodeCopier::copy(*ref);
       new_node.child_[index] = child_cpy;
       ref = std::make_shared<node_t>(new_node);
     }
   }
 
-  const_cast<node_ptr>(ref.get())->balance(ref);
+  balance(ref);
   return answ;
 }
 
 
 template<class T, class Comparator, class NodeCopier>
-void AvlSet<T, Comparator, NodeCopier>::replace(node_csptr &ref, T &value, int dir) {
+void avl_set<T, Comparator, NodeCopier>::replace(node_csptr &ref, T &value, int dir) {
   int child_index = dir;
 
   // If no further movement in given direction
@@ -270,19 +223,167 @@ void AvlSet<T, Comparator, NodeCopier>::replace(node_csptr &ref, T &value, int d
   // Going further till we reach the bottom.
   // We have to update all the nodes cause
   // replacing element will always be deleted.
-  node_t new_node = Copier::copy(*ref);
+  node_t new_node = NodeCopier::copy(*ref);
   replace(new_node.child_[dir], value, dir);
   ref = std::make_shared<node_t>(new_node);
-  new_node.balance(ref);
+  balance(ref);
 }
 
 
 template<class T, class Comparator, class NodeCopier>
-size_t AvlSet<T, Comparator, NodeCopier>::size() const {
+void avl_set<T, Comparator, NodeCopier>::balance(node_csptr &ref) {
+  update_height(ref);
+
+  if (get_factor(ref) <= -2) {
+    if (get_factor(ref->child_[1]) <= 0) {
+      small_rotation(ref);
+    }
+    else {
+      big_rotation(ref);
+    } 
+  }
+  else if (get_factor(ref) >= 2) {
+    if (get_factor(ref->child_[0]) >= 0) {
+      small_rotation(ref, true);
+    }
+    else {
+      big_rotation(ref, true);
+    } 
+  }  
+}
+
+template<class T, class Comparator, class NodeCopier>
+void avl_set<T, Comparator, NodeCopier>::update_height(node_csptr &ref) {
+  if (ref.get() == NULL)
+    return;
+
+  int l_h = get_height(ref->child_[0]);
+  int r_h = get_height(ref->child_[1]);
+  int new_height = std::max(l_h, r_h) + 1;
+  
+  if (ref->height_ != new_height) {
+    node_t new_node = NodeCopier::copy(*ref);
+    new_node.height_ = new_height;
+    ref = std::make_shared<const node_t>(new_node);
+  }
+}
+
+
+
+template<class T, class Comparator, class NodeCopier>
+size_t avl_set<T, Comparator, NodeCopier>::size() const {
   return size_;
 }
 
 
 
+// root             root
+//   |               |
+//   a               b  
+//  / \             / \
+// L   \    ==>    a   \
+//      b         / \   R
+//     / \       L   C
+//    C   R
+// L, C, R nodes don't change
+// a, b nodes do change
+template<class T, class Comparator, class NodeCopier>
+void avl_set<T, Comparator, NodeCopier>::small_rotation(node_csptr &ref, bool inverse) {
 
-};
+  // root        root  a_tmp     
+  //   |            \ /  
+  //   a             a   
+  //  / \           / \  b_tmp
+  // L   \    ==>  L   \ /
+  //      b             b
+  //     / \           / \
+  //    C   R         C   R
+
+  auto a_tmp = NodeCopier::copy(ref);
+  auto b_tmp = NodeCopier::copy(ref->child_[neg(1, inverse)]);
+
+  //root a_tmp     a_tmp     
+  //  \ /            |  
+  //   a             a   
+  //  / \  b_tmp    / \   root
+  // L   \ /  ==>  L   C  /
+  //      b              b
+  //     / \            / \
+  //    C   R          C   R
+  const_cast<node_csptr&>(a_tmp->child_[neg(1, inverse)]) = b_tmp->child_[neg(0, inverse)];
+  ref = b_tmp;
+
+  // a_tmp            root
+  //   |                |
+  //   a                b
+  //  / \   root ==>   / \
+  // L   C  /         a   R
+  //       b         / \
+  //      / \       L   C
+  //     ?   R
+  const_cast<node_csptr&>(ref->child_[neg(0, inverse)]) = a_tmp;
+ 
+  // Updating heights
+  update_height(const_cast<node_csptr&>(ref.get()->child_[neg(0, inverse)]));
+  update_height(ref);
+}
+
+
+template<class T, class Comparator, class NodeCopier>
+void avl_set<T, Comparator, NodeCopier>::big_rotation(node_csptr &ref, bool inverse) {
+  // root        root  a_tmp     
+  //   |            \ /  
+  //   a             a   
+  //  / \           / \  b_tmp
+  // L   \    ==>  L   \ /
+  //      b             b
+  //     / \    c_tmp  / \
+  //    c   R       \ /   R
+  //   / \           c 
+  //  M   N         / \
+  //               M   N
+  auto a_tmp = NodeCopier::copy(ref);
+  auto b_tmp = NodeCopier::copy(ref->child_[inverse? 0 : 1]);
+  auto c_tmp = NodeCopier::copy(b_tmp->child_[inverse? 1 : 0]);
+
+  //  root a_tmp         a_tmp 
+  //     \ /               |
+  //      a                a
+  //     / \  b_tmp       / \     b_tmp
+  //    L   \ /          L   M      |
+  //         b      ==>             b
+  // c_tmp  / \              root  / \
+  //     \ /   R               |  N   R
+  //      c                    c
+  //     / \                  / \
+  //    M   N                M   N
+  
+  // root_child is a now
+  const_cast<node_csptr&>(a_tmp->child_[neg(1, inverse)]) = c_tmp->child_[neg(0, inverse)];
+  const_cast<node_csptr&>(b_tmp->child_[neg(0, inverse)]) = c_tmp->child_[neg(1, inverse)];
+  ref = c_tmp;
+
+  //   a_tmp                  root
+  //     |                     |
+  //     a                     c
+  //    / \   b_tmp           / \
+  //   L   M    |    ==>     /   \
+  //            b           a     b
+  //     root  / \         / \   / \
+  //       |  N   R       L   M N   R
+  //       c
+  //      / \
+  //     M   N
+  const_cast<node_csptr&>(ref->child_[inverse? 1 : 0]) = a_tmp;
+  const_cast<node_csptr&>(ref->child_[inverse? 0 : 1]) = b_tmp;
+
+  // Updating heights
+  update_height(const_cast<node_csptr&>(ref->child_[inverse? 1 : 0]));
+  update_height(const_cast<node_csptr&>(ref->child_[inverse? 0 : 1]));
+  update_height(ref);
+}
+
+
+};// stlext
+
+#endif //_AVL_SET_HPP_
