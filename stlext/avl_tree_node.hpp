@@ -9,6 +9,21 @@ namespace stlext {
 template<class T, class Comparator>
 class AvlTreeNode {
  public:
+  void print(int t = 0) const{
+    for (int i = 0 ; i <= t; ++i) {
+      std::cout << " ";
+    }
+    std::cout << "value: " << value_ << " height: " << height_ << std::endl;
+    if (child_[0].get() != NULL) {
+      std::cout << "l";
+      child_[0]->print(t+1);
+    }
+    if (child_[1].get() != NULL) {
+      std::cout << "r";
+      child_[1]->print(t+1);
+    }
+  }
+
 
   typedef AvlTreeNode<T, Comparator>* node_ptr;
   typedef AvlTreeNode<T, Comparator>* const node_cptr;
@@ -29,7 +44,6 @@ class AvlTreeNode {
     child_[1] = node.child_[1];
   }
 
-  void find_and_remove(node_csptr &ref, const T &value, bool &remove);
   const T& get_value() const;
 
   // PRIVATE ? O_O
@@ -47,9 +61,6 @@ class AvlTreeNode {
   void balance(const node_csptr &ref, bool inverse = false);
   void small_rotation(node_csptr &ref, bool inverse = false);
   void big_rotation(node_csptr &ref, bool inverse = false);
-
-  // Removal related functions
-  void remove_rec(node_csptr &ref, T &val, int dir);
 
   // Debug related functions
   void invariant_check(const node_csptr &ref) const;
@@ -81,86 +92,6 @@ template<class T, class Comparator>
 void AvlTreeNode<T, Comparator>::invariant_check(const node_csptr &ref) const {
   EXPECT_LT(get_factor(ref), 2);
   EXPECT_GT(get_factor(ref), -2);
-}
-
-
-
-
-
-
-// REMOVAL RELATED SECTION
-
-
-// Considering subtree a valid AVL tree
-// removes node with given value if present.
-// Reference to subtree, passed through
-// ref is updated.
-// If sucessfully removed - remove is true
-// remove is false otherwise.
-template<class T, class Comparator>
-void AvlTreeNode<T, Comparator>::find_and_remove(node_csptr &ref, const T &value, bool &remove) {
-  // We are in the node we want to delete
-  remove = false;
-  if (value_ == value) {
-    if (height_ == 1) {
-      remove = true;
-      // After this command our node may be deleted
-      ref = node_csptr();
-      return;
-    }
-    else {
-      // FIXME What a terrible failure!
-      
-      int index = (get_factor(ref) > 0) ? 0 : 1;
-      int dir =   (get_factor(ref) > 0) ? 1 : 0;
-      auto& child = child_[index];
-      remove = true;
-      const_cast<node_ptr>(child.get())->remove_rec(child, value_, dir);
-    }
-  }
-  else {
-    size_t index = (compare_(value, value_))? 0 : 1;
-    //auto& child = child_[index];
-   
-    if (child_[index].get() != NULL)
-      const_cast<node_ptr>(child_[index].get())->find_and_remove(child_[index], value, remove);
-  }
-
-  balance(ref);
-  
-}
-
-// Considering subtree a valid AVL tree
-// implements a recursive part of removal
-// algorithm.
-// Reference to subtree, passed through
-// ref is updated.
-template<class T, class Comparator>
-void AvlTreeNode<T, Comparator>::remove_rec(node_csptr &ref, T &val, int dir) {
-  int child_index = dir;
-  
-  // If no further movement in given direction
-  // is possible - we must perform some actions
-  if (child_[dir].get() == NULL) {
-    // pushing up the value
-    val = std::move(value_);
-
-    // we can be at the bottom of recursion
-    if (height_ == 1) {
-      ref = node_csptr();
-      return;
-    }
-    else {
-      auto& child = const_cast<node_ptr>(ref.get())->child_[neg(dir, true)];
-      value_ = std::move(const_cast<node_ptr>(child.get())->value_);
-      child = node_csptr();
-    }
-  }
-  else {
-    const_cast<node_ptr>(child_[dir].get())->remove_rec(child_[dir], val, dir);
-  }
-
-  balance(ref);
 }
 
 

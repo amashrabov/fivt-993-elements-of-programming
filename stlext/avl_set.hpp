@@ -82,6 +82,14 @@ class AvlSet {
   typedef typename node_t::node_sptr  node_sptr;
   typedef typename node_t::node_csptr node_csptr;
 
+  void print() const {
+    if (root_.get() != NULL) {
+      std::cout << std::endl << "#PRINTING" << std::endl;
+      root_->print();
+    }
+  }
+
+
   AvlSet(): 
     size_(0) {}
   AvlSet(const AvlSet<T, Comparator, Copier> &set):
@@ -98,6 +106,7 @@ class AvlSet {
  private:
   bool insert(const T &value, node_csptr &ref);
   bool remove(const T &value, node_csptr &ref);
+  void replace(node_csptr &ref, T &value, int dir);
 
   node_csptr root_;
   size_t size_;
@@ -170,8 +179,7 @@ bool AvlSet<T, Comparator, NodeCopier>::remove(const T& value) {
     return false;
   }
 
-  bool ans = false;
-  const_cast<node_ptr>(root_.get())->find_and_remove(root_, value, ans);
+  bool ans = remove(value, root_);
 
   if (ans) {
     --size_;
@@ -185,27 +193,67 @@ bool AvlSet<T, Comparator, NodeCopier>::remove(const T &value, node_csptr &ref) 
   // We are in the node we want to delete
   // So we delete it.
   if (ref->value_ == value) {
+    // If this is a list - everything is
+    // very simple. Just deleting it.
     if (ref->height_ == 1) {
       ref = node_csptr();
     }
+    // If this is not a list - a substitution
+    // for this node is needed. Searching for
+    // this substitution is initiated.
     else {  
       int index = (AvlTreeNode<T, Comparator>::get_factor(ref) > 0) ? 0 : 1;
       int dir =   (AvlTreeNode<T, Comparator>::get_factor(ref) > 0) ? 1 : 0;
-      const_cast<node_ptr>(ref->child_[index].get())->remove_rec(ref->child_[index], ref->value_, dir);
+      // TODO the first time writing like this. If anything happens - check this line
+      replace(const_cast<node_csptr&>(ref->child_[index]), const_cast<T&>(ref->value_), dir);
+      const_cast<node_ptr>(ref.get())->balance(ref);
     }
 
     return true;
   }
-  
-  // The node to delete not yet found
+
+  // The node to delete is not yet found
   // So continuing search.
+  bool answ = false;
   size_t index = (compare_(value, ref->value_))? 0 : 1; 
   if (ref->child_[index].get() != NULL) {
-    remove(ref->child_[index], value, remove);
+    answ = remove(value, const_cast<node_csptr&>(ref->child_[index]));
+  }
+  const_cast<node_ptr>(ref.get())->balance(ref);
+  return answ;
+}
+
+
+template<class T, class Comparator, class NodeCopier>
+void AvlSet<T, Comparator, NodeCopier>::replace(node_csptr &ref, T &value, int dir) {
+  int child_index = dir;
+
+  // If no further movement in given direction
+  // is possible - we must perform some actions
+  if (ref->child_[dir].get() == NULL) {
+    // pushing up the value
+    value = std::move(ref->value_);
+
+    // If the replacement is a leaf
+    // just forgetting about it.
+    if (ref->height_ == 1) {
+      ref = node_csptr();
+    }
+    // If this is not a leaf then the 
+    // node only has one child.We put
+    // this child into parentr's place.
+    else {
+      ref = ref->child_[dir ^= 0x01];
+    }
+
+    return;
   }
 
+  // We go further if we can
+  replace(const_cast<node_csptr&>(ref->child_[dir]), value, dir);
   const_cast<node_ptr>(ref.get())->balance(ref);
 }
+
 
 
 template<class T, class Comparator, class NodeCopier>
