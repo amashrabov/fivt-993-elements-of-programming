@@ -75,7 +75,7 @@ class persistent_heap {
       root_(), size_(0), top_size_(0) {
   }
 
-  persistent_heap(Comparator cmp) :
+  explicit persistent_heap(Comparator cmp) :
       cmp_(cmp), root_(), size_(0), top_size_(0) {
   }
 
@@ -90,6 +90,13 @@ class persistent_heap {
   template<class Iterator>
   persistent_heap(Iterator begin, Iterator end, Comparator cmp) :
       cmp_(cmp), root_(), size_(0), top_size_(0) {
+    for (Iterator it = begin; it != end; ++it) {
+      this->push(*it);
+    }
+  }
+
+  template<class Iterator>
+  void push(Iterator begin, Iterator end) {
     for (Iterator it = begin; it != end; ++it) {
       this->push(*it);
     }

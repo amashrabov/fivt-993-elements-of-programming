@@ -44,7 +44,7 @@ TEST(persistent_heap, random_vector) {
 }
 
 TEST(persistent_heap, stress_random_vector) {
-  int size = 1000000;
+  int size = 100000;
   for (size_t j = 0; j < 10; j++) {
     std::srand(j);
     std::vector<int> v;
@@ -52,7 +52,8 @@ TEST(persistent_heap, stress_random_vector) {
       v.push_back(i);
     }
     random_shuffle(v.begin(), v.end());
-    persistent_heap<int> h(v.begin(), v.end());
+    persistent_heap<int> h;
+    h.push(v.begin(), v.end());
     for (size_t i = 0; i < size; i++) {
       ASSERT_EQ(i, h.top());
       h.pop();
@@ -62,7 +63,7 @@ TEST(persistent_heap, stress_random_vector) {
 
 
 TEST(persistent_heap, stress_random_vector_priority_queue) {
-  int size = 1000000;
+  int size = 100000;
   for (size_t j = 0; j < 10; j++) {
     std::srand(j);
     std::vector<int> v;
