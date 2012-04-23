@@ -77,7 +77,7 @@ Iterator find_first_not_less(Iterator begin, Iterator end, const T& element, con
       it_next = end - step;
       if (!less(*it_next, element)) {
         end = it_next;
-	avaliable_distance -= step;
+        avaliable_distance -= step;
       }
     }
     step >>= 1;

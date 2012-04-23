@@ -12,8 +12,9 @@ namespace stlext {
 // Sarches for the first object compared not less than element in the sorted [begin, end) interval.
 // Returns end if no such element present.
 // The time is O(log|advice - result|)
-template <class Iterator, class T, class Comparator>
-Iterator adviced_lower_bound(Iterator begin, Iterator end, Iterator advice, const T& element, Comparator compare) {
+template <class Iterator, class T, class Comparator = std::less<T> >
+Iterator adviced_lower_bound(Iterator begin, Iterator end, Iterator advice,
+                             const T& element, Comparator compare = std::less<T>()) {
   // Empty or broken interval case
   if (std::distance(begin, end) <= 0) return end;
   // Advice is out of bonds cases
@@ -39,26 +40,18 @@ Iterator adviced_lower_bound(Iterator begin, Iterator end, Iterator advice, cons
   }
 }
 
-template <class Iterator, class T>
-Iterator adviced_lower_bound(Iterator begin, Iterator end, Iterator advice, const T& element) {
-  return adviced_lower_bound(begin, end, advice, element, std::less<T>());
-}
-
 // Searches for the frst element compared greater than "element".
-template <class Iterator, class T, class Comparator>
-Iterator adviced_upper_bound(Iterator begin, Iterator end, Iterator advice, const T& element, Comparator compare) {
+template <class Iterator, class T, class Comparator = std::less<T> >
+Iterator adviced_upper_bound(Iterator begin, Iterator end, Iterator advice, 
+                             const T& element, Comparator compare = std::less<T>()) {
   // The first element not compared as <= is the one compared >.
   return adviced_lower_bound(begin, end, advice, element, create_less_or_equal(compare));
 }
 
-template <class Iterator, class T>
-Iterator adviced_upper_bound(Iterator begin, Iterator end, Iterator advice, const T& element) {
-  return adviced_upper_bound(begin, end, advice, element, std::less<T>());
-}
-
 // Returns the (lower_bound, upper_bound)
-template <class Iterator, class T, class Comparator>
-std::pair<Iterator, Iterator> adviced_equal_range(Iterator begin, Iterator end, Iterator advice, const T& element, Comparator compare) {
+template <class Iterator, class T, class Comparator = std::less<T> >
+std::pair<Iterator, Iterator> adviced_equal_range(Iterator begin, Iterator end, Iterator advice, 
+                                                  const T& element, Comparator compare = std::less<T>()) {
   Iterator first(begin), last(end);  
 
   // Empty or broken interval case
@@ -111,11 +104,6 @@ std::pair<Iterator, Iterator> adviced_equal_range(Iterator begin, Iterator end, 
   }
        
   return std::make_pair(first, last);
-}
-
-template <class Iterator, class T>
-std::pair<Iterator, Iterator> adviced_equal_range(Iterator begin, Iterator end, Iterator advice, const T& element) {
-  return adviced_equal_range(begin, end, advice, element, std::less<T>());
 }
 
 };
