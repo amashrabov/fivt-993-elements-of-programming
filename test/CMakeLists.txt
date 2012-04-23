@@ -9,11 +9,11 @@ set (TESTS
   #integer_part_of_log2_test.cc
   #it is dangerous test, on WIN it doesn't work
   
-  static_rmq_test.cc
-  static_rsq_test.cc
-  safe_distance_test.cc
-  persistent_heap_test.cc
-  persistent_heap_multithreaded_test.cc
+  static_rmq_test.cpp
+  static_rsq_test.cpp
+  safe_distance_test.cpp
+  persistent_heap_test.cpp
+  persistent_heap_multithreaded_test.cpp
   adviced_search_test.cpp
 )
 
