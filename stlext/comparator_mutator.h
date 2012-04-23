@@ -3,6 +3,8 @@
 
 #include <functional>
 
+namespace stlext {
+
 // Comparator wrapper class 
 template<class Comparator>
 class less: public std::binary_function<typename Comparator::first_argument_type,
@@ -157,5 +159,7 @@ template <class Comparator>
 not_equal<Comparator> create_not_equal(Comparator compare) {
   return not_equal<Comparator>(compare);
 }
+
+}; // stlext
 
 #endif

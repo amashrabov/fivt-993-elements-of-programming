@@ -2,51 +2,38 @@
 #include <functional>
 #include <vector>
 #include <algorithm>
-#include <iostream>
 
 #include "stlext/find_first_not_less.h"
 #include "stlext/adviced_search.h"
 
 using namespace stlext;
-//#define LOG
 
 
 
 int arr[10] = {0,1,2,3,4,5,6,7,8,9};
 int brr[10] = {0,0,2,2,4,4,6,6,8,8};
 
-template<class Iterator>
-void visualize (Iterator begin, Iterator a, Iterator b) {
-  #ifdef LOG
-  std::cout << " [" << a - begin << "] " << *a  <<
-         " [" << b - begin << "] " << *b << std::endl;
-  #endif
-}
 
 TEST (array_of_int, check_present_elements) {
   for (int i=0; i<10; i++) {
     for (int j=0; j<=i; j++) {
       int* answ;
-      EXPECT_EQ(answ = find_first_not_less(arr+j, arr+10, arr[i]), arr+i);
-      visualize(arr, answ, arr+i);
-      #ifdef LOG            
-        //std::cout << "  begin:" << j << " find:" << i << std::endl;
-      #endif
+      ASSERT_EQ(answ = find_first_not_less(arr+j, arr+10, arr[i]), arr+i);
     }
   }
 }
 
 TEST (array_of_int, not_present_less) {
-  EXPECT_EQ(find_first_not_less(arr, arr + 10, -100 ), arr);
+  ASSERT_EQ(find_first_not_less(arr, arr + 10, -100 ), arr);
 }
 
 TEST (array_of_int, not_present_more) {
-  EXPECT_EQ(find_first_not_less(arr, arr + 10, 100 ), arr + 10);
+  ASSERT_EQ(find_first_not_less(arr, arr + 10, 100 ), arr + 10);
 }
 
 TEST (array_of_int, not_present_in_range) {
   for (int i = 0; i < 5; ++i) {
-    EXPECT_EQ(find_first_not_less(brr, brr + 10, 2 * i - 1), brr + 2 * i);
+    ASSERT_EQ(find_first_not_less(brr, brr + 10, 2 * i - 1), brr + 2 * i);
   }
 }
 
@@ -60,7 +47,7 @@ TEST (array_of_int, random_equality_test) {
   std::sort(vec.begin(), vec.end(), std::greater<double>() );
 
   for (int i=0; i<vec.size(); ++i) {
-    EXPECT_EQ(*find_first_not_less(vec.begin(), vec.end(), vec[i], std::greater<double>()), vec[i]);
+    ASSERT_EQ(*find_first_not_less(vec.begin(), vec.end(), vec[i], std::greater<double>()), vec[i]);
   }
 }
 
@@ -68,16 +55,14 @@ TEST (lower_bound, single_elements) {
   for (int i = 0; i < 10; ++i)
     for (int j = 0; j < 10; ++j) {
       int* answ;
-      EXPECT_EQ(answ = adviced_lower_bound(arr, arr + 10, arr + j, arr[i]), arr + i);
-      visualize(arr, answ, arr + i);
+      ASSERT_EQ(answ = adviced_lower_bound(arr, arr + 10, arr + j, arr[i]), arr + i);
     }
 }
 
 TEST (lower_bound, multiple_elements) {
   for (int i = 1; i < 5; ++i) {
     int* ans;
-    EXPECT_EQ(ans = adviced_lower_bound(brr, brr + 10, brr, 2 * i), brr + 2 * i);
-    visualize(brr, ans, brr + 2 * i);
+    ASSERT_EQ(ans = adviced_lower_bound(brr, brr + 10, brr, 2 * i), brr + 2 * i);
   }
 }
 
@@ -85,16 +70,14 @@ TEST (upper_bound, single_elements) {
   for (int i = 0; i < 10; ++i)
     for (int j = 0; j < 10; ++j) {
       int* answ;
-      EXPECT_EQ(answ = adviced_upper_bound(arr, arr + 10, arr+j, arr[i]), arr + i + 1);
-      visualize(arr, answ, arr + i + 1);
+      ASSERT_EQ(answ = adviced_upper_bound(arr, arr + 10, arr+j, arr[i]), arr + i + 1);
     }
 }
 
 TEST (upper_bound, multiple_elements) {
   for (int i = 1; i < 5; ++i) {
     int* answ;
-    EXPECT_EQ(answ = adviced_upper_bound(brr, brr + 10, brr, 2 * i), brr + 2 * (i + 1));
-    visualize(brr, answ, brr + 2 * (i + 1));
+    ASSERT_EQ(answ = adviced_upper_bound(brr, brr + 10, brr, 2 * i), brr + 2 * (i + 1));
   }
 }
 
@@ -102,7 +85,7 @@ TEST (equal_range, single_elements) {
   for (int i = 0; i < 10; ++i) {
     for (int j = 0; j < 10; ++j) {
       std::pair<int*, int*> ans = adviced_equal_range(arr, arr + 10, arr + j, arr[i]);
-      EXPECT_EQ(true, ans == std::make_pair(arr + i, arr + i + 1));
+      ASSERT_EQ(true, ans == std::make_pair(arr + i, arr + i + 1));
     }
   }
 }

@@ -91,5 +91,5 @@ Iterator find_first_not_less(Iterator begin, Iterator end, const T& element) {
   return find_first_not_less(begin, end, element, std::less<T>());
 }
 
-};
+}; // stlext
 #endif
