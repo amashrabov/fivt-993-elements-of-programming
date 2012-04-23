@@ -3,7 +3,7 @@ project(STLEXT)
 
 enable_testing()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -O2")
 
 add_subdirectory(stlext)
 add_subdirectory(test)
