@@ -4,6 +4,7 @@
 #include <vector>
 #include <algorithm>
 #include <cstdlib>
+#include <queue>
 
 #include "persistent_heap.h"
 
@@ -29,7 +30,6 @@ TEST(persistent_heap, simple) {
 }
 
 TEST(persistent_heap, random_vector) {
-  //persistent_heap<int> h;
   std::vector<int> v;
   int size = 100;
   for (size_t i = 0; i < size; i++) {
@@ -45,7 +45,7 @@ TEST(persistent_heap, random_vector) {
 
 TEST(persistent_heap, stress_random_vector) {
   int size = 1000000;
-  for (size_t j = 0; j < 1; j++) {
+  for (size_t j = 0; j < 10; j++) {
     std::srand(j);
     std::vector<int> v;
     for (size_t i = 0; i < size; i++) {
@@ -60,24 +60,24 @@ TEST(persistent_heap, stress_random_vector) {
   }
 }
 
-/*
+
 TEST(persistent_heap, stress_random_vector_priority_queue) {
   int size = 1000000;
-  for (size_t j = 0; j < 1; j++) {
+  for (size_t j = 0; j < 10; j++) {
     std::srand(j);
     std::vector<int> v;
     for (size_t i = 0; i < size; i++) {
       v.push_back(i);
     }
     random_shuffle(v.begin(), v.end());
-    persistent_heap<int> h(v.begin(), v.end());
+    std::priority_queue<int, std::vector<int>, std::greater<int> > h(v.begin(), v.end());
     for (size_t i = 0; i < size; i++) {
       ASSERT_EQ(i, h.top());
       h.pop();
     }
   }
 }
-*/
+
 
 TEST(persistent_heap, huge_T_stress_test) {
   int size = 10000;
