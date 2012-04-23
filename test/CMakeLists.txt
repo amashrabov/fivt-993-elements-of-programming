@@ -14,14 +14,12 @@ set (TESTS
   safe_distance_test.cc
   persistent_heap_test.cc
   persistent_heap_multithreaded_test.cc
-
+  adviced_search_test.cpp
 )
 
 add_executable (unittests
   ${TESTS}
 )
-
-
 
 target_link_libraries (
   unittests
