@@ -7,7 +7,7 @@
 #include <vector>
 
 #include <cassert>
-
+#include <cstddef>
 /*
 Author: Alex Taran
 Module: Fenwick tree

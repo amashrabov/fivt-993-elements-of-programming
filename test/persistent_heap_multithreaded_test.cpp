@@ -84,12 +84,12 @@ TEST(persistent_heap_multitheaded, simple) {
 
 TEST(persistent_heap_multitheaded, 10_threads) {
   heap_checker checker;
-  checker.random_fill(10000, 0);
+  checker.random_fill(100000, 0);
   std::vector<std::thread> threads(10);
   std::vector<heap_checker> checkers(10);
   for (int i = 0; i < 10; ++i) {
     checkers[i] = checker;
-    threads[i] = std::thread(checkers[i], 100000, i);
+    threads[i] = std::thread(checkers[i], 1000000, i);
   }
   for (int i = 0; i < 10; ++i) {
     threads[i].join();

@@ -10,19 +10,17 @@ set (TESTS
   #it is dangerous test, on WIN it doesn't work
 
   fenwick_tree_test.cpp
-  static_rmq_test.cc
-  static_rsq_test.cc
-  safe_distance_test.cc
-  persistent_heap_test.cc
-  persistent_heap_multithreaded_test.cc
-
+  static_rmq_test.cpp
+  static_rsq_test.cpp
+  safe_distance_test.cpp
+  persistent_heap_test.cpp
+  persistent_heap_multithreaded_test.cpp
+  adviced_search_test.cpp
 )
 
 add_executable (unittests
   ${TESTS}
 )
-
-
 
 target_link_libraries (
   unittests

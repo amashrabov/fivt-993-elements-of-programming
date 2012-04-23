@@ -18,9 +18,15 @@ struct node {
     public:
 
     node_ptr clone() {
-      node_ptr my_clone(new node(**this));
-      this->base_class::operator=(static_cast<base_class>(my_clone));
-      return my_clone;
+      if (this->unique()) {
+        //std::cout << "unique" << std::endl;
+        return const_cast<node_ptr>((this->get()));
+      } else {
+        //std::cout << "copy" << std::endl;
+        node_ptr my_clone(new node(**this));
+        this->base_class::operator=(static_cast<base_class>(my_clone));
+        return my_clone;
+      }
     }
 
     void make_leaf(const T& value) {
@@ -69,7 +75,7 @@ class persistent_heap {
       root_(), size_(0), top_size_(0) {
   }
 
-  persistent_heap(Comparator cmp) :
+  explicit persistent_heap(Comparator cmp) :
       cmp_(cmp), root_(), size_(0), top_size_(0) {
   }
 
@@ -84,6 +90,13 @@ class persistent_heap {
   template<class Iterator>
   persistent_heap(Iterator begin, Iterator end, Comparator cmp) :
       cmp_(cmp), root_(), size_(0), top_size_(0) {
+    for (Iterator it = begin; it != end; ++it) {
+      this->push(*it);
+    }
+  }
+
+  template<class Iterator>
+  void push(Iterator begin, Iterator end) {
     for (Iterator it = begin; it != end; ++it) {
       this->push(*it);
     }
