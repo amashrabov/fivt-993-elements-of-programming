@@ -8,7 +8,8 @@ set (TESTS
 
   #integer_part_of_log2_test.cc
   #it is dangerous test, on WIN it doesn't work
-  
+
+  fenwick_tree_test.cpp
   static_rmq_test.cc
   static_rsq_test.cc
   safe_distance_test.cc
