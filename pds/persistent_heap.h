@@ -6,60 +6,29 @@
 #include <memory>
 #include <iostream>
 
+#include "pds_ptr.h"
+
 namespace pds {
 
 template<class T>
 struct node {
 
+  public:
+
   typedef node<T>* node_ptr;
+  typedef pds_ptr<node> const_node_ptr;
 
-  class const_node_ptr: public std::shared_ptr<const node<T> > {
-
-    public:
-
-    node_ptr clone() {
-      if (this->unique()) {
-        //std::cout << "unique" << std::endl;
-        return const_cast<node_ptr>((this->get()));
-      } else {
-        //std::cout << "copy" << std::endl;
-        node_ptr my_clone(new node(**this));
-        this->base_class::operator=(static_cast<base_class>(my_clone));
-        return my_clone;
-      }
-    }
-
-    void make_leaf(const T& value) {
-      this->reset(new node(value));
-    }
-
-    private:
-
-    typedef std::shared_ptr<const node<T> > base_class;
-
-  };
+  explicit node(const T &the_value) :
+      value(the_value) {
+    //std::cout << "new node value =" << value << std::endl;
+  }
 
   ~node() {
     //std::cout << "delete node value =" << value << std::endl;
   }
 
   T value;
-
   const_node_ptr child[2];
-
-  private:
-
-  explicit node(const node& base_node) :
-      value(base_node.value) {
-    child[0] = base_node.child[0];
-    child[1] = base_node.child[1];
-    //std::cout << "new node value =" << value << std::endl;
-  }
-
-  explicit node(const T &the_value) :
-      value(the_value) {
-    //std::cout << "new node value =" << value << std::endl;
-  }
 
 };
 
@@ -106,14 +75,14 @@ class persistent_heap {
     if (root_ == NULL) {
       construct_root(value);
     } else {
-      node_ptr new_root = root_.clone();
+      node_ptr new_root = root_.switch_to_mutable();
       router r(new_root, size_, top_size_);
       while (!r.is_end()) {
         swap_if_less(value, r.current_value());
         r.down();
       }
       swap_if_less(value, r.current_value());
-      r.next().make_leaf(value);
+      r.next() = new node<T>(value);
       increment_size();
     }
   }
@@ -124,7 +93,7 @@ class persistent_heap {
       delete_root();
     } else {
       decrement_size();
-      node_ptr new_root = root_.clone();
+      node_ptr new_root = root_.switch_to_mutable();
       T value(delete_last_node(new_root));
       node_ptr& curr(new_root);
       while (curr->child[1] != NULL) {
@@ -133,7 +102,7 @@ class persistent_heap {
         T min_value(curr->child[min_child_number]->value);
         if (cmp_(min_value, value)) {
           curr->value = std::move(min_value);
-          curr = curr->child[min_child_number].clone();
+          curr = curr->child[min_child_number].switch_to_mutable();
         } else {
           break; // goto next if
         }
@@ -142,7 +111,7 @@ class persistent_heap {
           curr->child[0] != NULL);
       if ((only_left_child && cmp_(curr->child[0]->value, value))) {
         curr->value = curr->child[0]->value;
-        curr->child[0].clone()->value = std::move(value);
+        curr->child[0].switch_to_mutable()->value = std::move(value);
       } else {
         curr->value = std::move(value);
       }
@@ -172,7 +141,7 @@ class persistent_heap {
   size_t top_size_;
 
   void construct_root(const T& value) {
-    root_.make_leaf(value);
+    root_ = new node<T>(value);
     size_ = 1;
     top_size_ = 1;
   }
@@ -229,7 +198,7 @@ class persistent_heap {
     // move current node to next on the way
 
     void down() {
-      current_ = next().clone();
+      current_ = next().switch_to_mutable();
       current_top_size_ >>= 1;
       current_last_level_ %= current_top_size_ + 1;
       count_next();
