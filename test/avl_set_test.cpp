@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
 #include <string>
 
-#include "stlext/avl_set.hpp"
+#include "pds/avl_set.hpp"
 
-using namespace stlext;
+using namespace pds;
 
 TEST(set, use_case_string) {
   std::string ss("Some string");

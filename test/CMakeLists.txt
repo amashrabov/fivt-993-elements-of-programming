@@ -5,16 +5,7 @@ include_directories(${CMAKE_SOURCE_DIR}/pds)
 
 
 set (TESTS
-
-  #integer_part_of_log2_test.cc
-  #it is dangerous test, on WIN it doesn't work
   avl_set_test.cpp  
-  static_rmq_test.cpp
-  static_rsq_test.cpp
-  safe_distance_test.cpp
-  persistent_heap_test.cpp
-  persistent_heap_multithreaded_test.cpp
-  adviced_search_test.cpp
 )
 
 add_executable (unittests

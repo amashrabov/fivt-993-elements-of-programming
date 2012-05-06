@@ -3,15 +3,16 @@
 
 #include <memory>
 #include <gtest/gtest.h>
+#include "pds_ptr.h"
 
-namespace stlext {
+namespace pds {
   
 template<class T>
 struct avl_tree_node {
   typedef avl_tree_node<T>* node_ptr;
   typedef avl_tree_node<T>* const node_cptr;
-  typedef std::shared_ptr<avl_tree_node<T> > node_sptr;
-  typedef std::shared_ptr<const avl_tree_node<T> > node_csptr;
+  typedef pds_ptr<avl_tree_node<T> > node_sptr;
+  typedef pds_ptr<const avl_tree_node<T> > node_csptr;
 
   template <class ... Args>
   avl_tree_node(Args... args):
@@ -30,6 +31,6 @@ struct avl_tree_node {
   node_csptr child_[2];
 };
 
-}; // namespace stlext
+}; // namespace pds
 
 #endif //_AVL_TREE_NODE_HPP_

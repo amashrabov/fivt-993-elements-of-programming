@@ -1,0 +1,1 @@
+/usr/bin/c++    -std=c++0x -O2    CMakeFiles/unittests.dir/avl_set_test.cpp.o  -o unittests -rdynamic ../contrib/gtest/libgtest.a ../contrib/gtest/libgtest_main.a -lpthread 
