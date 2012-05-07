@@ -13,8 +13,6 @@ functional
 -
 avl_tree_node.hpp
 .././pds/avl_tree_node.hpp
-pseudo_copier.cpp
-.././pds/pseudo_copier.cpp
 
 .././pds/avl_tree_node.hpp
 memory
@@ -27,8 +25,6 @@ pds_ptr.h
 .././pds/pds_ptr.h
 memory
 -
-
-.././pds/pseudo_copier.cpp
 
 ../contrib/gtest/gtest.h
 limits
@@ -146,6 +142,8 @@ vector
 gtest/gtest.h
 -
 string
+-
+set
 -
 pds/avl_set.hpp
 /home/losik/prog/fivt-993-elements-of-programming/test/pds/avl_set.hpp

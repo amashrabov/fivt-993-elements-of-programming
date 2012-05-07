@@ -5,6 +5,5 @@ test/CMakeFiles/unittests.dir/avl_set_test.cpp.o
  .././pds/avl_set.hpp
  .././pds/avl_tree_node.hpp
  .././pds/pds_ptr.h
- .././pds/pseudo_copier.cpp
  ../contrib/gtest/gtest.h
  /home/losik/prog/fivt-993-elements-of-programming/test/avl_set_test.cpp
