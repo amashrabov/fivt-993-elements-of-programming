@@ -71,31 +71,19 @@ class Trie {
                 }
 
                 const_node_ptr get_child(C name) const {
-                    for (auto ch : childs_) {
-                        if (ch.first == name)
-                            return ch.second;
-                    }
+                    return childs_.at(name);
                 }
 
                 bool has_child(C name) const {
-                    for (auto ch : childs_) {
-                        if (ch.first == name)
-                            return true;
-                    }
-                    return false;
+                    return childs_.count(name) > 0;
                 }
 
                 void set_child(C name, const_node_ptr value) {
-                    for (auto ch : childs_) {
-                        if (ch.first == name)
-                            ch.second = value;
-                            return;
-                    }
-                    childs_.push_back(std::make_pair(name, value));
+                    childs_[name] = value;
                 }
                 
                 void set_child(C name, node_ptr value) {
-                    set_child(name, static_cast<const_node_ptr>(*value));
+                    childs_[name] = value;
                 }
 
                 void dump_recursive(int offset = 0) const {
@@ -113,8 +101,7 @@ class Trie {
 
             private:
                 bool is_final_;
-                // std::map<C, const_node_ptr> childs_;
-                std::vector<std::pair<C, const_node_ptr>> childs_;
+                std::map<C, const_node_ptr> childs_;
         };
 
         const_node_ptr root_;
