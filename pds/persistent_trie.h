@@ -13,7 +13,7 @@
 
 #include "pds_ptr.h"
 
-#define DEBUG 1
+#define DEBUG 0
 #define debug_print(fmt, ...) \
     do { if (DEBUG) fprintf(stderr, fmt, __VA_ARGS__); } while (0)
 
@@ -26,24 +26,25 @@ class Trie {
         }
 
         void add_word(const std::vector<C>& s) {
-            node_ptr cur = root_.switch_to_mutable();
+            const_node_ptr cur = root_;
             for (auto ch : s) {
+                debug_print("\n\n", 0);
                 dump_trie();
-                debug_print("%c %p\n", ch, cur);
+                debug_print("adding %c %p\n", ch, cur.get());
                 cur = add_symbol(cur, ch);
             }
-            cur->set_final();
+            // cur->set_final();
         }
 
-        bool contains(const std::vector<C>& s) {
-            const Node* cur = root_.get();
-            for (auto ch : s) {
-                if (!cur->has_child(ch))
-                    return false;
-                cur = cur->get_child(ch).get();
-            }
-            return cur->is_final();
-        }
+        // bool contains(const std::vector<C>& s) {
+            // const Node* cur = root_.get();
+            // for (auto ch : s) {
+                // if (!cur->has_child(ch))
+                    // return false;
+                // cur = cur->get_child(ch).get();
+            // }
+            // return cur->is_final();
+        // }
 
 
     private:
@@ -53,10 +54,25 @@ class Trie {
 
         class Node {
             public:
-                Node() : is_final_(false) {}
+                Node() : is_final_(false), childs_() {
+                    debug_print("*** Node(), %p\n", this);
+                }
 
                 explicit Node(const Node& o):
-                    is_final_(o.is_final_), childs_(o.childs_) {}
+                    is_final_(o.is_final_), childs_(o.childs_) {
+                    debug_print("*** Node(const Node& o), %p; this: %p\n", &o, this);
+                    debug_print("####\n", 0);
+                    this->dump_recursive();
+                    debug_print("####\n", 0);
+                }
+
+                Node& operator= (const Node& o) {
+                    debug_print("*** Node operator= %p; this: %p\n", &o, this);
+                }
+
+                ~Node() {
+                    debug_print("*** ~Node(), %p\n", this);
+                }
 
                 void set_final() {
                     is_final_ = true;
@@ -78,11 +94,11 @@ class Trie {
                     return childs_.count(name) > 0;
                 }
 
-                void set_child(C name, const_node_ptr value) {
-                    childs_[name] = value;
-                }
+                // void set_child(C name, const const_node_ptr& value) {
+                    // childs_[name] = value;
+                // }
                 
-                void set_child(C name, node_ptr value) {
+                void set_child(C name, const_node_ptr value) {
                     childs_[name] = value;
                 }
 
@@ -92,7 +108,7 @@ class Trie {
                         fprintf(stderr, " ");
                     fprintf(stderr, "childs&: %p ", &childs_);
                     for (auto ch : childs_) {
-                        // fprintf(stderr, "%c %p; ", ch.first, ch.second.get());
+                        fprintf(stderr, "%c %p; ", ch.first, ch.second.get());
                     }
                     fprintf(stderr, "\n");
                     for (auto ch : childs_)
@@ -106,17 +122,17 @@ class Trie {
 
         const_node_ptr root_;
 
-        node_ptr add_symbol(node_ptr cur, C ch) {
-            node_ptr new_child;
+        const_node_ptr add_symbol(const_node_ptr cur, C ch) {
+            const_node_ptr next;
             if (cur->has_child(ch)) {
-                new_child = cur->get_child(ch).switch_to_mutable();
+                next = cur->get_child(ch);
                 fprintf(stderr, "here\n");
             } else {
-                new_child = new Node();
+                next = new Node();
             }
-            cur->set_child(ch, new_child);
-            debug_print("%p\n", new_child);
-            return new_child;
+            cur.switch_to_mutable()->set_child(ch, next);
+            debug_print("next: %p\n", next.get());
+            return next;
         }
 
         void dump_trie() {
