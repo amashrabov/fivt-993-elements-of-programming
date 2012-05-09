@@ -1,8 +1,6 @@
-// Copyright 2012 Artem Volkhin
+// Copyright 2013 Artem Volkhin
 #ifndef PDS_PERSISTENT_TRIE_H_
 #define PDS_PERSISTENT_TRIE_H_
-
-// TODO(volkhin): check codestyle
 
 #include <map>
 #include <memory>
@@ -15,7 +13,6 @@
 
 #include "pds/pds_ptr.h"
 
-#define DEBUG 1
 #define debug_print(fmt, ...) \
     do { if (DEBUG) fprintf(stderr, fmt, __VA_ARGS__); } while (0)
 
@@ -30,9 +27,6 @@ class Trie {
         void add_word(const std::vector<C>& s) {
             node_ptr cur = root_.switch_to_mutable();
             for (auto ch : s) {
-                debug_print("\n\n", 0);
-                dump_trie();
-                debug_print("adding %c %p\n", ch, cur);
                 cur = add_symbol(cur, ch);
             }
             cur->set_final();
@@ -56,23 +50,6 @@ class Trie {
 
         class Node {
             public:
-                /* Node() : is_final_(false), childs_() {
-                    debug_print("*** Node(), %p\n", this);
-                }
-
-                explicit Node(const Node& o):
-                    is_final_(o.is_final_), childs_(o.childs_) {
-                    debug_print("*** Node(const Node& o), %p; this: %p\n", &o, this);
-                }
-
-                Node& operator= (const Node& o) {
-                    debug_print("*** Node operator= %p; this: %p\n", &o, this);
-                }
-
-                ~Node() {
-                    debug_print("*** ~Node(), %p\n", this);
-                }  */
-
                 void set_final() {
                     is_final_ = true;
                 }
@@ -128,7 +105,6 @@ class Trie {
         node_ptr add_symbol(node_ptr cur, C ch) {
             if (cur->has_child(ch)) {
                 const_node_ptr& next = cur->get_child(ch);
-                // cur->set_child(ch, next); // TODO: is it necessary?
                 return next.switch_to_mutable();
             } else {
                 node_ptr next = new Node();
