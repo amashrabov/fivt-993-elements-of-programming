@@ -17,14 +17,15 @@ namespace pds {
 
     TEST(persistent_trie, simple) {
         Trie<char> trie;
-        trie.add_word(string2vector("ab"));
+        trie.add_word(string2vector("abcde"));
         trie.add_word(string2vector("xyz"));
+        trie.add_word(string2vector("abcer"));
         ASSERT_EQ(trie.contains(string2vector("abcde")), true);
         ASSERT_EQ(trie.contains(string2vector("ab")), false);
         trie.add_word(string2vector("ab"));
-        // ASSERT_EQ(trie.contains(string2vector("ab")), false);
-        // ASSERT_EQ(trie.contains(string2vector("abcde")), true);
-        // ASSERT_EQ(trie.contains(string2vector("ab")), false);
+        ASSERT_EQ(trie.contains(string2vector("ab")), true);
+        ASSERT_EQ(trie.contains(string2vector("xyz")), true);
+        ASSERT_EQ(trie.contains(string2vector("abcde")), true);
     }
 
     TEST(persistent_trie, different_key_type) {

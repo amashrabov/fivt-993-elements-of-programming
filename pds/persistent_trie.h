@@ -1,19 +1,21 @@
-#ifndef STLEXT_TRIE_H_
-#define STLEXT_TRIE_H_
+// Copyright 2012 Artem Volkhin
+#ifndef PDS_PERSISTENT_TRIE_H_
+#define PDS_PERSISTENT_TRIE_H_
 
-// TODO: check codestyle
+// TODO(volkhin): check codestyle
 
 #include <map>
 #include <memory>
+#include <vector>
 
 #include <cassert>
 #include <cstddef>
 #include <cstdlib>
 #include <cstdio>
 
-#include "pds_ptr.h"
+#include "pds/pds_ptr.h"
 
-#define DEBUG 0
+#define DEBUG 1
 #define debug_print(fmt, ...) \
     do { if (DEBUG) fprintf(stderr, fmt, __VA_ARGS__); } while (0)
 
@@ -26,25 +28,25 @@ class Trie {
         }
 
         void add_word(const std::vector<C>& s) {
-            const_node_ptr cur = root_;
+            node_ptr cur = root_.switch_to_mutable();
             for (auto ch : s) {
                 debug_print("\n\n", 0);
                 dump_trie();
-                debug_print("adding %c %p\n", ch, cur.get());
+                debug_print("adding %c %p\n", ch, cur);
                 cur = add_symbol(cur, ch);
             }
-            // cur->set_final();
+            cur->set_final();
         }
 
-        // bool contains(const std::vector<C>& s) {
-            // const Node* cur = root_.get();
-            // for (auto ch : s) {
-                // if (!cur->has_child(ch))
-                    // return false;
-                // cur = cur->get_child(ch).get();
-            // }
-            // return cur->is_final();
-        // }
+        bool contains(const std::vector<C>& s) {
+            const_node_ptr cur = root_;
+            for (auto ch : s) {
+                if (!cur->has_child(ch))
+                    return false;
+                cur = cur->get_child(ch);
+            }
+            return cur->is_final();
+        }
 
 
     private:
@@ -54,16 +56,13 @@ class Trie {
 
         class Node {
             public:
-                Node() : is_final_(false), childs_() {
+                /* Node() : is_final_(false), childs_() {
                     debug_print("*** Node(), %p\n", this);
                 }
 
                 explicit Node(const Node& o):
                     is_final_(o.is_final_), childs_(o.childs_) {
                     debug_print("*** Node(const Node& o), %p; this: %p\n", &o, this);
-                    debug_print("####\n", 0);
-                    this->dump_recursive();
-                    debug_print("####\n", 0);
                 }
 
                 Node& operator= (const Node& o) {
@@ -72,7 +71,7 @@ class Trie {
 
                 ~Node() {
                     debug_print("*** ~Node(), %p\n", this);
-                }
+                }  */
 
                 void set_final() {
                     is_final_ = true;
@@ -86,6 +85,11 @@ class Trie {
                     return is_final_;
                 }
 
+                const_node_ptr& get_child(C name) {
+                    assert(has_child(name));
+                    return childs_[name];
+                }
+
                 const_node_ptr get_child(C name) const {
                     return childs_.at(name);
                 }
@@ -94,11 +98,11 @@ class Trie {
                     return childs_.count(name) > 0;
                 }
 
-                // void set_child(C name, const const_node_ptr& value) {
-                    // childs_[name] = value;
-                // }
-                
                 void set_child(C name, const_node_ptr value) {
+                    childs_[name] = value;
+                }
+
+                void set_child(C name, node_ptr value) {
                     childs_[name] = value;
                 }
 
@@ -106,7 +110,6 @@ class Trie {
                     fprintf(stderr, "%p ", this);
                     for (int i = 0; i < offset; i++)
                         fprintf(stderr, " ");
-                    fprintf(stderr, "childs&: %p ", &childs_);
                     for (auto ch : childs_) {
                         fprintf(stderr, "%c %p; ", ch.first, ch.second.get());
                     }
@@ -122,17 +125,16 @@ class Trie {
 
         const_node_ptr root_;
 
-        const_node_ptr add_symbol(const_node_ptr cur, C ch) {
-            const_node_ptr next;
+        node_ptr add_symbol(node_ptr cur, C ch) {
             if (cur->has_child(ch)) {
-                next = cur->get_child(ch);
-                fprintf(stderr, "here\n");
+                const_node_ptr& next = cur->get_child(ch);
+                // cur->set_child(ch, next); // TODO: is it necessary?
+                return next.switch_to_mutable();
             } else {
-                next = new Node();
+                node_ptr next = new Node();
+                cur->set_child(ch, next);
+                return next;
             }
-            cur.switch_to_mutable()->set_child(ch, next);
-            debug_print("next: %p\n", next.get());
-            return next;
         }
 
         void dump_trie() {
@@ -144,4 +146,4 @@ class Trie {
 
 }  // namespace stlext
 
-#endif  // STLEXT_TRIE_H_
+#endif  // PDS_PERSISTENT_TRIE_H_
