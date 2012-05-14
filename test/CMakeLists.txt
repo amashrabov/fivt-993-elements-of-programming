@@ -16,6 +16,7 @@ set (TESTS
   persistent_heap_test.cpp
   persistent_heap_multithreaded_test.cpp
   adviced_search_test.cpp
+  avl_set_test.cpp  
 )
 
 add_executable (unittests
