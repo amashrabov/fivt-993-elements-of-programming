@@ -3,36 +3,16 @@
 
 
 // compile with --std=c++0x
-// ЗАГОНЯЕМ ВСЕ Т в PTRT
-// ЗАГОНЯЕМ ВСЕ Т в PTRT
-// ЗАГОНЯЕМ ВСЕ Т в PTRT
-// ЗАГОНЯЕМ ВСЕ Т в PTRT
-// ЗАГОНЯЕМ ВСЕ Т в PTRT
-// ЗАГОНЯЕМ ВСЕ Т в PTRT
-// ЗАГОНЯЕМ ВСЕ Т в PTRT
-// ЗАГОНЯЕМ ВСЕ Т в PTRT
-// ЗАГОНЯЕМ ВСЕ Т в PTRT
-// ЗАГОНЯЕМ ВСЕ Т в PTRT
-// ЗАГОНЯЕМ ВСЕ Т в PTRT
-// ЗАГОНЯЕМ ВСЕ Т в PTRT
-// ЗАГОНЯЕМ ВСЕ Т в PTRT
-// ЗАГОНЯЕМ ВСЕ Т в PTRT
-// ЗАГОНЯЕМ ВСЕ Т в PTRT
-// ЗАГОНЯЕМ ВСЕ Т в PTRT
-// ЗАГОНЯЕМ ВСЕ Т в PTRT
-// ЗАГОНЯЕМ ВСЕ Т в PTRT
-// ЗАГОНЯЕМ ВСЕ Т в PTRT
-// ЗАГОНЯЕМ ВСЕ Т в PTRT
-// ЗАГОНЯЕМ ВСЕ Т в PTRT
-// ЗАГОНЯЕМ ВСЕ Т в PTRT
-// ЗАГОНЯЕМ ВСЕ Т в PTRT
+
+#include "pds_ptr.h"
 
 #include <cassert>
 #include <functional>
 #include <memory>
 #include <iostream>
 
-namespace stlext
+
+namespace pds
 {
 
 template <typename T>
@@ -93,17 +73,24 @@ std::ostream& operator << (std::ostream &fout, const Interval &interval)
 }
 
 template <typename T> 
+void initPtrt(std::shared_ptr<T> &p, const T &obj)
+{
+	p = std::shared_ptr<T>(new T(obj));
+} 
+
+template <typename T, typename TSum, typename TScalMult> 
 class Vertex
 {
-	typedef std::shared_ptr<Vertex<T> > ptrvertex;
+	typedef Vertex<T, TSum, TScalMult> VertexT;
+	typedef pds::pds_ptr<VertexT> ptrvertex;
 	typedef std::shared_ptr<T> ptrt;
 	private:
 		void init_()
 		{
 			deltaDef = false;
 			valDef = false;
-			leftV.reset();
-			rightV.reset();		
+			leftV = NULL;
+			rightV = NULL;		
 		}
 	public:
 		ptrt sum, delta, val;
@@ -120,7 +107,37 @@ class Vertex
 		{
 			init_();					
 		}	
-		void writeVertex(std::ostream& fout)		
+		void assignOnVertexSegment(const T &obj, Interval interval)
+		{
+				deltaDef = false;
+				valDef = true;
+				initPtrt(val, obj);
+				TScalMult multiplier_;
+				initPtrt(sum, multiplier_(interval.length(), obj));
+		}
+		void addOnVertexSegment(const T &obj, Interval interval)
+		{
+				TSum summator_;
+				TScalMult multiplier_;
+				if (valDef)
+					val = ptrt(new T(summator_(*(val), obj)));
+				else if (deltaDef)
+					delta = ptrt(new T(summator_(*(delta), obj)));
+				else
+				{
+					deltaDef = true;
+					delta = ptrt(new T(obj));
+				}
+				initPtrt(sum, summator_(*(sum), multiplier_(interval.length(), obj)));				
+		}
+		void refindSum()
+		{
+			VertexT *ukleft = leftV.switch_to_mutable();
+			VertexT *ukright = rightV.switch_to_mutable();
+			TSum summator_;
+			initPtrt(sum, summator_(*(ukleft->sum), *(ukright->sum)));
+		}
+		/*void writeVertex(std::ostream& fout)		
 		{
 			fout << "{sum = " << *sum << "; val = ";
 			if (valDef)
@@ -133,174 +150,147 @@ class Vertex
 			else
 				fout << "NA";
 			fout << "}";
-		}										
+		}		*/								
 }; 
-	
-template <typename T> 
-void initPtrt(std::shared_ptr<T> &p, const T &obj)
-{
-	p = std::shared_ptr<T>(new T(obj));
-} 
-template <typename T>
+/*template <typename T>
 void clone(std::shared_ptr<Vertex<T> > &vert) 
 {
 	
 	std::shared_ptr<Vertex<T> > tmp(new Vertex<T>(*vert) );
 	vert = tmp;
-}
+}*/
+template<typename T, typename VertexT>
+class Adder
+{
+public:
+	T obj;
+	
+	Adder(const T &obj)
+	:obj(obj)
+	{}
+	void operator () (pds::pds_ptr<VertexT> &vert, Interval &interval)
+	{
+		VertexT *uk = vert.switch_to_mutable();
+		uk->addOnVertexSegment(obj, interval);
+	} 
+};
+template<typename T, typename VertexT>
+class Assigner
+{
+public:
+	T obj;
+	
+	Assigner(const T &obj)
+	:obj(obj)
+	{}
+	void operator () (pds::pds_ptr<VertexT> &vert, Interval &interval)
+	{
+		VertexT *uk = vert.switch_to_mutable();
+		uk->assignOnVertexSegment(obj, interval);	
+	}
+};
+template<typename T, typename TSum, typename VertexT>
+class SumFinder
+{
+private:
+	bool ansDef;
+	T ans;		
+	TSum summator_;	
+public:
+	SumFinder()
+	{
+		ansDef = false;
+	}
+	void operator () (pds::pds_ptr<VertexT> &vert, Interval &interval)
+	{
+		VertexT *uk = vert.switch_to_mutable();		
+		if (!ansDef)
+		{
+			ansDef = true;
+			ans = *(uk->sum);
+		}
+		else
+
+			ans = summator_(ans, *(uk->sum));
+	}
+	T getAns()
+	{
+		return ans;
+	}
+};
 template <typename T, typename TSum = std::plus<T>, typename TScalMult =  ScalMult<T> >
 class PersistantSegmentTree
 {
 	private: 
 		TSum summator_;
 		TScalMult multiplier_;
-		
-		typedef std::shared_ptr<Vertex<T> > ptrvertex;
+		typedef Vertex<T, TSum, TScalMult> VertexT;
+		typedef pds::pds_ptr<VertexT> ptrvertex;
 		typedef std::shared_ptr<T> ptrt;
+
 		
-		void refindSum_(ptrvertex &vert)
-		{
-			assert(vert != NULL);
-			
-			initPtrt(vert->sum, summator_(*(vert->leftV->sum), *(vert->rightV->sum)));
-		}
+		
 		size_t size_;	
 		ptrvertex root_;
 		void init_(ptrvertex &vert, Interval interval, const T &obj)
 		{
 			if (interval.length() == 1)
 			{
-				vert = ptrvertex(new Vertex<T>(obj));
+				vert = (new VertexT(obj));
 			}
 			else
 			{
-				vert = ptrvertex(new Vertex<T>());
-				init_(vert->leftV, interval.leftHalf(), obj);
-				init_(vert->rightV, interval.rightHalf(), obj);
-				refindSum_(vert);
+				VertexT *uk = new VertexT();
+				vert = new VertexT();
+				init_(uk->leftV, interval.leftHalf(), obj);
+				init_(uk->rightV, interval.rightHalf(), obj);
+				uk->refindSum();				
+				vert = uk;
 			}  
 		}
 		
-		void assignOnVertexSegment_(ptrvertex &root, const T &obj, Interval interval)
-		{
-				assert(root != NULL);
-				clone(root); // for support of persistance
-					
-				root->deltaDef = false;
-				root->valDef = true;
-				initPtrt(root->val, obj);
-				initPtrt(root->sum, multiplier_(interval.length(), obj));
-		}
-		void addOnVertexSegment_(ptrvertex &root, const T &obj, Interval interval)
-		{
-				assert(root != NULL);
-				clone(root); // for support of persistance
-				
-				if (root->valDef)
-					root->val = ptrt(new T(summator_(*(root->val), obj)));
-				else if (root->deltaDef)
-					root->delta = ptrt(new T(summator_(*(root->delta), obj)));
-				else
-				{
-					root->deltaDef = true;
-					root->delta = ptrt(new T(obj));
-				}
-				initPtrt(root->sum, summator_(*(root->sum), multiplier_(interval.length(), obj)));				
-		}
+		
 		void pushDown_(ptrvertex &vert, const Interval &interval)
 		{
-			assert(vert != NULL && vert->leftV != NULL && vert->rightV != NULL);
-			clone(vert);
-			clone(vert->leftV);
-			clone(vert->rightV);
-			if (vert->valDef)
+			assert(vert != NULL);
+			VertexT *uk = vert.switch_to_mutable();
+			assert(uk->leftV != NULL && uk->rightV != NULL);
+			VertexT *ukleft = uk->leftV.switch_to_mutable();
+			VertexT *ukright = uk->rightV.switch_to_mutable();
+			
+			if (uk->valDef)
 			{
-				vert->valDef = false;
-				assignOnVertexSegment_(vert->leftV, *(vert->val), interval.leftHalf());
-				assignOnVertexSegment_(vert->rightV, *(vert->val), interval.rightHalf());
+				uk->valDef = false;
+				ukleft->assignOnVertexSegment(*(vert->val), interval.leftHalf());
+				ukright->assignOnVertexSegment(*(vert->val), interval.rightHalf());
 			}
-			if (vert->deltaDef)
+			if (uk->deltaDef)
 			{
-				vert->deltaDef = false;
-				addOnVertexSegment_(vert->leftV, *(vert->delta), interval.leftHalf());
-				addOnVertexSegment_(vert->rightV, *(vert->delta), interval.rightHalf());
+				uk->deltaDef = false;
+				ukleft->addOnVertexSegment(*(vert->delta), interval.leftHalf());
+				ukright->addOnVertexSegment(*(vert->delta), interval.rightHalf());
 			}
-			refindSum_(vert);
+			uk->refindSum();
 		}
 		template <typename ACTIONTYPE>
 		void goDfs(ptrvertex &vert, Interval curInt, Interval &queryInt, ACTIONTYPE &action)
 		{
 			if (!curInt.isIntersect(queryInt))
 				return;
-			clone(vert);			
 			if (curInt.isIn(queryInt))
 			{
 				action(vert, curInt);
 				return;
 			}
-			pushDown_(vert, curInt);						
-			goDfs(vert->leftV, curInt.leftHalf(), queryInt, action);
-			goDfs(vert->rightV, curInt.rightHalf(), queryInt, action);
-			refindSum_(vert);
+			pushDown_(vert, curInt);
+			VertexT *uk = vert.switch_to_mutable();						
+			goDfs(uk->leftV, curInt.leftHalf(), queryInt, action);
+			goDfs(uk->rightV, curInt.rightHalf(), queryInt, action);
+			uk->refindSum();			
 			//vert->sum = summator_(vert->leftV->sum, vert->rightV->sum);
 		}		
-		class Adder
-		{
-		public:
-			T obj;
-			TSum summator_;
-			TScalMult multiplier_;
-			PersistantSegmentTree<T, TSum, TScalMult>* myTree;
-
-			Adder(const T &obj, PersistantSegmentTree<T, TSum, TScalMult>* myTree)
-			:obj(obj), myTree(myTree)
-			{}
-			void operator () (ptrvertex &vert, Interval &interval)
-			{
-				myTree->addOnVertexSegment_(vert, obj, interval);	
-			} 
-		};
-		class Assigner
-		{
-		public:
-			T obj;
-			TSum summator_;
-			TScalMult multiplier_;
-			PersistantSegmentTree<T, TSum, TScalMult>* myTree;
-
-			Assigner(const T &obj,  PersistantSegmentTree<T, TSum, TScalMult>* myTree)
-			:obj(obj), myTree(myTree)
-			{}
-			void operator () (ptrvertex &vert, Interval &interval)
-			{
-				myTree->assignOnVertexSegment_(vert, obj, interval);	
-			}
-		};
-		class SumFinder
-		{
-		public:
-			bool ansDef;
-			T ans;		
-			TSum summator_;
-			TScalMult multiplier_;
-	
-			SumFinder()
-			{
-				ansDef = false;
-			}
-			void operator () (ptrvertex &vert, Interval &interval)
-			{
-				if (!ansDef)
-				{
-					ansDef = true;
-					ans = *(vert->sum);
-				}
-				else
 		
-					ans = summator_(ans, *(vert->sum));
-			}
-		};
-		void writeDfs_(std::ostream &fout, ptrvertex &root, int depth, int l, int r)
+		/*void writeDfs_(std::ostream &fout, ptrvertex &root, int depth, int l, int r)
 		{
 			int mid = (l+r)/2;
 			if (l != r)
@@ -312,15 +302,15 @@ class PersistantSegmentTree
 			fout << "\n";
 			if (l != r)
 				writeDfs_(fout, root->rightV, depth+1, mid+1, r);
-		}
+		}*/
 public:	
 		PersistantSegmentTree(size_t size, const T &obj)
 		:size_(size)
 		{
 			if (!size)
 			{	
-				Vertex<T>* uk = NULL;
-				root_ = ptrvertex(uk);			
+				VertexT* uk = NULL;
+				root_ = uk;			
 				return;
 			}
 			init_(root_, Interval(0, size_-1), obj);
@@ -344,33 +334,33 @@ public:
 		T findSum(size_t l, size_t r) 
 		{
 			assert(l <= r && 0 <= l && r < size_);
-			SumFinder sumfinder;
+			SumFinder<T, TSum, VertexT> sumfinder;
 			Interval query(l, r);	
 			goDfs(root_, Interval(0, size_-1), query, sumfinder);	
-			assert(sumfinder.ansDef);		
-			return sumfinder.ans;
+			//assert(sumfinder.ansDef);		
+			return sumfinder.getAns();
 		}
 		void assign(size_t l, size_t r, const T &obj)
 		{
 			assert(0 <= l && l <= r && r < size_);
-			Assigner assigner(obj, this);
+			Assigner<T, VertexT> assigner(obj);
 			Interval query(l, r);
 			goDfs(root_, Interval(0, size_-1), query, assigner);				
 		}
 		void add(size_t l, size_t r, const T &obj)
 		{
 			assert(0 <= l && l <= r && r < size_);
-			Adder adder(obj, this);
+			Adder<T, VertexT> adder(obj);
 			Interval query(l, r);
 			goDfs(root_, Interval(0, size_-1), query, adder);						
 		}
-		void writeTree(std::ostream &fout)
+		/*void writeTree(std::ostream &fout)
 		{
 			fout << "===================================================================\n";
 			writeDfs_(fout, root_, 0, 0, size_-1);
 			fout << "===================================================================\n";
 
-		}
+		}*/
 };
 
 }

@@ -28,8 +28,8 @@ std::ostream& operator << (std::ostream &fout, const Point &p)
 }
 int main()
 {
-	stlext::PersistantSegmentTree<Point> tree(true, 23, Point(0, 1, 2));
-	stlext::PersistantSegmentTree<Point> tree1 = tree;
+	pds::PersistantSegmentTree<Point> tree(23, Point(0, 1, 2));
+	pds::PersistantSegmentTree<Point> tree1 = tree;
 	tree.add(4, 10, Point(-2, -1, 0));
 	tree1.assign(1, 12, Point(0, 0, 3));
 	std::cout << tree.findSum(2, 7) << " " << tree1.findSum(2, 7) << "\n";

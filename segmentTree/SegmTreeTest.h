@@ -9,7 +9,7 @@
 #include <utility>
 #include <algorithm>
 
-using namespace stlext;
+using namespace pds;
 
 struct Deg
 {
