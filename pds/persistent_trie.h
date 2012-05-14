@@ -13,9 +13,6 @@
 
 #include "pds/pds_ptr.h"
 
-#define debug_print(fmt, ...) \
-    do { if (DEBUG) fprintf(stderr, fmt, __VA_ARGS__); } while (0)
-
 namespace pds {
 template <class C>
 class Trie {
@@ -62,37 +59,16 @@ class Trie {
                     return is_final_;
                 }
 
-                const_node_ptr& get_child(C name) {
-                    assert(has_child(name));
-                    return childs_[name];
-                }
-
-                const_node_ptr get_child(C name) const {
+                const_node_ptr get_child(const C& name) const {
                     return childs_.at(name);
                 }
 
-                bool has_child(C name) const {
+                bool has_child(const C& name) const {
                     return childs_.count(name) > 0;
                 }
 
-                void set_child(C name, const_node_ptr value) {
+                void set_child(const C& name, const_node_ptr value) {
                     childs_[name] = value;
-                }
-
-                void set_child(C name, node_ptr value) {
-                    childs_[name] = value;
-                }
-
-                void dump_recursive(int offset = 0) const {
-                    fprintf(stderr, "%p ", this);
-                    for (int i = 0; i < offset; i++)
-                        fprintf(stderr, " ");
-                    for (auto ch : childs_) {
-                        fprintf(stderr, "%c %p; ", ch.first, ch.second.get());
-                    }
-                    fprintf(stderr, "\n");
-                    for (auto ch : childs_)
-                        ch.second->dump_recursive(offset + 1);
                 }
 
             private:
@@ -102,21 +78,18 @@ class Trie {
 
         const_node_ptr root_;
 
-        node_ptr add_symbol(node_ptr cur, C ch) {
+        node_ptr add_symbol(node_ptr cur, const C& ch) {
+            node_ptr next = NULL;
             if (cur->has_child(ch)) {
-                const_node_ptr& next = cur->get_child(ch);
-                return next.switch_to_mutable();
+                const_node_ptr const_next = cur->get_child(ch);
+                next = const_next.switch_to_mutable();
+                cur->set_child(ch, const_next);
             } else {
-                node_ptr next = new Node();
-                cur->set_child(ch, next);
-                return next;
+                next = new Node();
+                const_node_ptr const_next(next);
+                cur->set_child(ch, const_next);
             }
-        }
-
-        void dump_trie() {
-            fprintf(stderr, "===BEGIN===\n");
-            root_->dump_recursive();
-            fprintf(stderr, "===END===\n");
+            return next;
         }
 };
 

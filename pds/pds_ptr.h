@@ -11,6 +11,12 @@ class pds_ptr: public std::shared_ptr<const Node> {
 
   public:
 
+  pds_ptr() : base() {
+  }
+
+  pds_ptr(Node* node_ptr) : base(node_ptr) {
+  }
+
   Node* switch_to_mutable() {
     if (this->unique()) {
       return const_cast<Node*>((this->get()));
@@ -24,7 +30,6 @@ class pds_ptr: public std::shared_ptr<const Node> {
   void operator=(Node* node_ptr) {
     this->base::operator=(static_cast<base>(node_ptr));
   }
-
 
   void operator=(std::unique_ptr<Node> node_ptr) {
     this->base::operator=(static_cast<base>(node_ptr));
