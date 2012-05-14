@@ -5,7 +5,8 @@ include_directories(${CMAKE_SOURCE_DIR}/pds)
 
 
 set (TESTS
-  avl_set_test.cpp  
+  avl_set_test.cpp
+  avl_set_multithreaded_test.cpp  
 )
 
 add_executable (unittests

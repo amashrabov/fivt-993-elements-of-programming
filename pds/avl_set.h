@@ -38,6 +38,9 @@ class avl_set {
   // Returns the number of elements.
   size_t size() const;
 
+  // Retuns if set is empty
+  bool empty() const;
+
  private:
   // Recursive insertion function. Returns true
   // if after insertion ref subtree was changed
@@ -262,6 +265,12 @@ void avl_set<T, Comparator>::update_height(const_node_ptr &ref) {
 template<class T, class Comparator>
 size_t avl_set<T, Comparator>::size() const {
   return size_;
+}
+
+
+template<class T, class Comparator>
+bool avl_set<T, Comparator>::empty() const {
+  return (size_ == 0);
 }
 
 
