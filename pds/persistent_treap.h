@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <iostream>
+#include "pds_ptr.h"
 
 
 template<class T>
@@ -10,27 +11,12 @@ struct node{
 	
 	typedef node<T>* pnode;
 
-	class const_spnode : public std::shared_ptr<const node<T> > {
+	class const_spnode : public pds::pds_ptr<node<T>> {
     public:
 
-    pnode clone() {
-		if (this->unique()) {
-        return const_cast<pnode>((this->get()));
-		} else 
-			if (*this == NULL) {
-				pnode my_clone = NULL;
-				this->base_class::operator=(static_cast<base_class>(my_clone));
-				return my_clone;
-			} else {
-				pnode my_clone(new node(**this));
-				this->base_class::operator=(static_cast<base_class>(my_clone));
-				return my_clone;
-			}
-	}
-		
 	void make_leaf(const T & value) {
 		pnode new_node = new node(value);
-		this->reset(new_node);
+		this->reset(new_node);		
 	}
 
 	void make_virt_leaf(const T & value) {
@@ -62,11 +48,8 @@ struct node{
 						priority(rand()%MAXPRIORITY), 
 						size(1),
 						virt(false){
-		pnode new_left = left.clone();
-		new_left = NULL;
-		pnode new_right = right.clone();
-		new_right = NULL;
-		
+		left.nullify();
+		right.nullify();		
 	}
 
 	explicit node (const_spnode nod) : value(nod->value) {
@@ -77,13 +60,6 @@ struct node{
 		virt = nod->virt;
 	}
 
-/*	explicit node (spnode nod) : value(nod->value) {
-		priority = nod->priority;
-		size = nod->size;
-		left = nod->left;
-		right = nod->right;
-	}
-	*/
 	explicit node (pnode nod) : value(nod->value) {
 		priority = nod->priority;
 		size = nod->size;
@@ -140,10 +116,10 @@ public:
 			root_.make_leaf(value);
 			return true;
 		}
-		pnode new_root = root_.clone(); 		
+		pnode new_root = root_.switch_to_mutable(); 		
 		const_spnode const_new_node_ptr;
 		const_new_node_ptr.make_leaf(value);
-		pnode new_node_ptr = const_new_node_ptr.clone();
+		pnode new_node_ptr = const_new_node_ptr.switch_to_mutable();
 		insert(new_root, new_node_ptr);		
 		return true;
 	}
@@ -154,7 +130,7 @@ public:
 
 	bool pop(const T & value){
 		if (!exist_(root_, value)) return false;
-		pnode new_root = root_.clone();
+		pnode new_root = root_.switch_to_mutable();
 		erase(new_root, value);
 		if (new_root->virt) clear();
 		return true;
@@ -176,10 +152,6 @@ public:
 		print_node(root_);
 	}
 
-/*	treap Union(treap t1, treap t2){
-
-	}
-	*/
 private:
 	void construct_root(const T& value) {
 		root_->make_leaf(value);
@@ -221,17 +193,16 @@ private:
 		} else					
 			if (compare_priority(root, new_node) ){	
 				check_children(new_node);				
-				pnode new_left = new_node->left.clone();				
-				pnode new_right = new_node->right.clone();				
+				pnode new_left = new_node->left.switch_to_mutable();				
+				pnode new_right = new_node->right.switch_to_mutable();				
 				split (root, new_node->value, new_left, new_right);		
-				check_children(new_node);				
-				//root = new_node;				
+				check_children(new_node);							
 				root->copy_pnode(new_node);				
 			} else {				
 				check_children(root);
 				
-				pnode new_left = root->left.clone();
-				pnode new_right = root->right.clone();
+				pnode new_left = root->left.switch_to_mutable();
+				pnode new_right = root->right.switch_to_mutable();
 				insert ( (cmp_(new_node->value, root->value) ? new_left : new_right), new_node);				
 
 				check_children(root);				
@@ -263,14 +234,14 @@ private:
 
 	void erase(pnode & root, const T & value){
 		if (!cmp_(root->value, value) && !cmp_(value, root->value)){
-			pnode new_left = root->left.clone();
-			pnode new_right = root->right.clone();
+			pnode new_left = root->left.switch_to_mutable();
+			pnode new_right = root->right.switch_to_mutable();
 			merge(root, new_left, new_right);
 			check_children_null(root);
 		} else{
 			pnode new_root;
-			if (cmp_(value,root->value)) new_root = root->left.clone(); 
-				else new_root = root->right.clone();
+			if (cmp_(value,root->value)) new_root = root->left.switch_to_mutable(); 
+				else new_root = root->right.switch_to_mutable();
 			erase (new_root, value);
 			check_children_null(root);
 		}
@@ -299,19 +270,17 @@ private:
 			return;
 		}
 		if (cmp_(x, root->value)) {
-			right->copy_pnode(root);
-			//left->value = NULL;
+			right->copy_pnode(root);			
 			left->virt = true;
 			check_null(right->left); 
-			pnode new_right = right->left.clone();
+			pnode new_right = right->left.switch_to_mutable();
 			split(new_right, x, left, new_right);			
 			check_null(right->left);
 		} else {			
-			left->copy_pnode(root);
-			//right->value = NULL;
+			left->copy_pnode(root);			
 			right->virt = true;
 			check_null(left->right);
-			pnode new_left = left->right.clone();
+			pnode new_left = left->right.switch_to_mutable();
 			split(new_left, x, new_left, right);
 			check_null(left->right);
 		}
@@ -329,13 +298,13 @@ private:
 			if (compare_priority(right, left) ){
 					root->copy_pnode(left);
 					check_null(root->right);
-					pnode new_left = root->right.clone();
+					pnode new_left = root->right.switch_to_mutable();
 					merge(new_left, new_left, right);
 					check_null(root->right);
 			} else {
 				root = right;
 				check_null(root->left);
-				pnode new_right = root->left.clone();
+				pnode new_right = root->left.switch_to_mutable();
 				merge(new_right, left, new_right);
 				check_null(root->left);
 			}
