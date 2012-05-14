@@ -17,7 +17,7 @@ class node{
 
 public:
 
-	node(T val, const_node_ptr p): 
+	node(const T& val, const_node_ptr p): 
 	  value(val), prev(p) {};
 
 	T get_value() const{
@@ -43,14 +43,14 @@ public:
 	persistent_stack():
 		_top(0), _size(0){}
 
-	void push(T value){
+	void push(const T& value){
 		_size++;
 		const_node_ptr new_top(new node<T>(value, _top));
 		_top = new_top;
 	}
 
-	T top(){
-		if (_size == 0) throw empty();
+	T top() const{
+		if (_size == 0) throw psd::empty();
 		else {
 			T result = _top->get_value();
 			return result;
@@ -65,11 +65,11 @@ public:
 		}
 	}
 
-	bool empty(){
+	bool empty() const{
 		return (_size == 0);
 	}
 
-	size_t size(){
+	size_t size() const{
 		return _size;
 	}
 
