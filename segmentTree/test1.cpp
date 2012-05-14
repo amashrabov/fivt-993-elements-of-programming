@@ -1,4 +1,4 @@
-#include "PersSegmTreeML.h"
+#include "PersSegmTree.h"
 
 #include <iostream>
 #include <cstdio>
@@ -9,17 +9,24 @@
 int main()
 {
 
-	double x;
-	stlext::PersistantSegmentTree<double> tree(true, 10, x);
-	tree.assign(2, 6, 1.2);
+	double x = 0;
+	stlext::PersistantSegmentTree<double> tree(10, x); // 0 0 0 0 0 0 0 0 0 0
+	//std::cerr << "MADE\n";	
+	//tree.writeTree(std::cout);
 
-	printf("%.10lf\n", tree.findSum(5, 7));
-	printf("%.10lf\n", tree.findSum(1, 1));
-	printf("%.10lf\n", tree.findSum(2, 5));
+	tree.assign(2, 6, 1.2); // 0 0 1.2 1.2 1.2 1.2 1.2 0 0 0
 
-	tree.add(4, 9, -2);
+	printf("%.10lf\n", tree.findSum(5, 7)); //2.4
+	printf("%.10lf\n", tree.findSum(1, 1)); //0
+	printf("%.10lf\n", tree.findSum(2, 5)); //4.8
 
-	printf("%.10lf\n", tree.findSum(2, 5));
+	//tree.writeTree(std::cout);
+
+	tree.add(4, 9, -2); // 0 0 1.2 1.2 -0.8 -0.8 -0.8 -2 -2 -2
+
+	tree.writeTree(std::cout);
+
+	printf("%.10lf\n", tree.findSum(2, 5)); //0.8
 
 	return 0;
 }
