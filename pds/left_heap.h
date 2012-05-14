@@ -7,6 +7,7 @@
 #include <memory>
 #include <iostream>
 
+#include "pds_ptr.h"
 
 /*
   TODO:
@@ -14,7 +15,7 @@
   time tests
 */
 
-namespace psd{
+namespace pds{
 
 namespace internal{
 template<class T>
@@ -22,24 +23,7 @@ struct node{
 public:
   typedef node<T>* node_ptr;
 
-  class const_node_ptr : public std::shared_ptr<const node<T>> {
-  public:
-    const_node_ptr operator=(node_ptr nd){
-      this->base_class::operator=(static_cast<base_class>(nd));
-      return *this;
-    }
-    node_ptr clone(){
-      node_ptr my_clone(new node(**this));
-      this->base_class::operator=(static_cast<base_class>(my_clone));
-      return my_clone;
-    }
-    void make_leaf(const T &value) {
-      this->reset(new node(value));
-    }
-
-  private:
-    typedef std::shared_ptr<const node<T>> base_class;
-  };
+  typedef pds_ptr<node> const_node_ptr;
 
   explicit node (const T &key)
     : key(key), s_value(1) {
@@ -49,7 +33,7 @@ public:
     : key(key) {
     left_child=left;
     right_child=right;
-    count_s_value();
+    fix_leftlist();
   }
 
   void fix_leftlist(){
@@ -83,8 +67,8 @@ public:
 
 template<class T, class Comparator>
 typename node<T>::const_node_ptr merge_nodes(
-      typename node<T>::const_node_ptr left, 
-      typename node<T>::const_node_ptr right,
+      typename node<T>::const_node_ptr &left, 
+      typename node<T>::const_node_ptr &right,
       Comparator cmp){
   if(left==nullptr)
     return right;
@@ -93,7 +77,7 @@ typename node<T>::const_node_ptr merge_nodes(
   if(cmp(right->key, left->key)) {  
     std::swap(left, right);
   }
-  typename node<T>::node_ptr mutable_left = left.clone();
+  typename node<T>::node_ptr mutable_left = left.switch_to_mutable();
                     // left point to new "clonned" version of node
 
   mutable_left->right_child = merge_nodes<T, Comparator> 
@@ -165,12 +149,12 @@ public:
   void push(const T &key){
     if(root_ == nullptr){
       size_ = 1;
-      root_.make_leaf(key);
+      root_ = new internal::node<T> (key);
     }
     else{
       size_++;
       const_node_ptr new_node;
-      new_node.make_leaf(key);
+      new_node = new internal::node<T> (key);
       root_ = internal::merge_nodes<T, Comparator> (root_, new_node, cmp_);
     }
   }
@@ -201,8 +185,9 @@ public:
   }
 
   void pop(){
+    typename internal::node<T>::node_ptr mutable_root = root_.switch_to_mutable();    
     root_ = internal::merge_nodes<T, Comparator> 
-              (root_->left_child, root_->right_child, cmp_);
+              (mutable_root->left_child, mutable_root->right_child, cmp_);
     size_--;
   }
 
@@ -238,6 +223,6 @@ private:
   Comparator cmp_;
 };
 
-} //namespace psd
+} //namespace pds
 
 #endif

@@ -11,6 +11,8 @@ set (TESTS
   static_rmq_test.cpp
   static_rsq_test.cpp
   safe_distance_test.cpp
+  left_heap_test.cpp
+  left_heap_multithreaded_test.cpp
   persistent_heap_test.cpp
   persistent_heap_multithreaded_test.cpp
   adviced_search_test.cpp
