@@ -1,5 +1,5 @@
-#ifndef _STLEXT_VECTOR_H_
-#define _STLEXT_VECTOR_H_
+#ifndef _PDS_VECTOR_H_
+#define _PDS_VECTOR_H_
 
 #include <iostream>
 #include <cassert>
@@ -8,7 +8,7 @@
 #include <boost/make_shared.hpp>
 #include <boost/smart_ptr.hpp>
 
-namespace stlext {
+namespace pds {
 
 using boost::shared_ptr;
 using boost::static_pointer_cast;
@@ -267,6 +267,6 @@ class vector {
   }
 };
 
-}  // namespace stlext
+}  // namespace pds
 
-#endif  // _STLEXT_VECTOR_H_
+#endif  // _PDS_VECTOR_H_
