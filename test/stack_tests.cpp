@@ -1,103 +1,105 @@
 #include <iostream>
 #include <string>
 #include <stack>
+#include <assert.h>
 #include "persistent_stack.h"
 
-using std::cin;
-using std::cout;
-using std::endl;
-using std::stack;
-using std::string;
-using namespace psd;
+namespace stlext {
 
-int main(){
+TEST(persistent_stack_int, simple){
+	persistent_stack<int> s1;
+	for (int i = 0; i < 10; i++)
+		s1.push(i);
+	s1.push(10);
+	for (int i = 10; i >=0; i --) {
+		int t = s1.top();
+		s1.pop();
+		 ASSERT_EQ(t, i);
+	}
+	 ASSERT_TRUE(s1.empty());
+}
+
+TEST(persistent_stack_int, two_stacks_1){
 	persistent_stack<int> s1;
 	for (int i = 0; i < 10; i++)
 		s1.push(i);
 	persistent_stack<int> s2 = s1;
 	s2.push(11);
 	s1.push(10);
-	cout << "Expected numbers 10 - 0" << endl;
-	while (!s1.empty()) {
+	for (int i = 10; i >=0; i --) {
 		int t = s1.top();
 		s1.pop();
-		cout << t  << endl;
+		ASSERT_EQ(t, i);
 	}
-	cout << "Expected 11 and 9 - 0" << endl;
-	while (!s2.empty()) {
+	for (int i = 11; i >=0; i --) {
+		if (i == 10) continue;
 		int t = s2.top();
 		s2.pop();
-		cout << t  << endl;
+		ASSERT_EQ(t, i);
 	}
+	ASSERT_TRUE(s1.empty());
+	ASSERT_TRUE(s2.empty());
+}
+
+TEST(persistent_stack_int, two_stacks_2){
+	persistent_stack<int> s1;
 	s1.push(2);
 	s1.push(3);
 	persistent_stack<int> s3 = s1;
 	s1.push(4);
-	cout << "Expected 4 - 2" << endl;
-	while (!s1.empty()) {
+	for (int i = 4; i >= 2; i --) {
 		int t = s1.top();
 		s1.pop();
-		cout << t  << endl;
+		ASSERT_EQ(i, t);
 	}
-	cout << "Expected 3, 2" << endl;
-	while (!s3.empty()) {
+	for (int i = 3; i >= 2; i --) {
 		int t = s3.top();
 		s3.pop();
-		cout << t  << endl;
+		ASSERT_EQ(i, t);
 	}
-	
-	persistent_stack<string> t1;
-	persistent_stack<string> t2;
-	
+	ASSERT_TRUE(s1.empty());
+	ASSERT_TRUE(s2.empty());
+	ASSERT_TRUE(s3.empty());
+}
+
+TEST(persistent_stask_string, two_stacks){
 	for (int i = 0; i < 10; i++)
 		t1.push("sdf");
 	for (int i = 0; i < 10; i++)
 		t2.push("qwe");
-	cout << "Expected 10 sdf's" << endl;
-	while (!t1.empty()) {
+	ASSERT_FALSE(t1.empty());
+	for (int i = 0; i < 10; i++) {
 		string t = t1.top();
 		t1.pop();
-		cout << t  << endl;
+		ASSERT_EQ(t, "sdf");
 	}
-	cout << "Expected 10 qwe's" << endl;
-	while (!t2.empty()) {
+	ASSERT_TRUE(t1.empty());
+	for (int i = 0; i < 10; i++) {
 		string t = t2.top();
 		t2.pop();
-		cout << t  << endl;
+		ASSERT_EQ(t, "sdf");
 	}
-	if (true){
-	cout << "Stress test: pushing 10 00 000 ints into this stack and the standard one" << endl;
+	ASSERT_TRUE(t2.empty());
+}
+
+TEST(pesistent_stack_int, huge){
 	stack<int>* std_s = new stack<int>;
 	persistent_stack<int> per_s;
 	for (int i = 0; i <= 10000000; i++){
 		int r = rand();
-		if (i % 1000000 == 0) cout << i/ 100000 << "%" << endl;
 		std_s->push(r);
 		per_s.push(r);
 	}
 	int fails = 0; 
-	cout << "Comparing" << endl;
 
 	for (int i = 0; i <= 10000000; i++){
 		int r = std_s->top();
-		if (i % 1000000 == 0) cout << i/ 100000 << "%" << endl;
 		std_s->pop();
 		if (r != per_s.top()) fails ++;
 		per_s.pop();
 	}
-	cout << "Deleting the standard stack" << endl;
 	delete std_s;
-	cout << "Finished with " << fails << " fails" << endl;
-	}
-	cout << "Cathing empty error" << endl;
-	try {
-		s1.pop();
-	}
-	catch (empty){
-		cout << "Cought" << endl;
-	}
-	
-	
-	char a; cin >> a;
-	return 0;
+	ASSERT_EQ(fails, 0);
+}
+
 }
