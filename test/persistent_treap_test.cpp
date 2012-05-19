@@ -62,7 +62,7 @@ TEST(persistent_treap, access_by_order_and_persistence){
 }
 
 TEST(persistent_treap, performance_test){
-	int T_SIZE = 100000;
+	int T_SIZE = 1000000;
 	int T_NUMBER = 1;
 	std::vector<int> a;
 	persistent_treap <int> t;
@@ -133,6 +133,32 @@ TEST(persistent_treap, string_sort){
 		}
 	}
 }
+
+
+TEST(persistent_treap, random_access){
+	int T_SIZE = 100;
+	int T_NUMBER = 100;
+	std::vector<int> a;
+	persistent_treap <int> t;
+	for (int test = 0; test < T_NUMBER; test++){
+		a = std::vector<int> (0,0);
+		t.clear();
+		for (int i = 1; i <= T_SIZE; ++i){
+			int k = get_rand();
+			a.push_back(k);
+			if (!t.push(k)) a.pop_back();	
+		}
+
+		std::sort(a.begin(), a.end());
+		ASSERT_EQ(t.size(), a.size());
+		for (int i = 1; i <= a.size(); ++i){
+			int rand_ind = get_rand() % a.size();
+			int k = t.get_kth(rand_ind+1);
+			ASSERT_EQ(k, a[rand_ind]);
+		}
+	}
+}
+
 
 
 
