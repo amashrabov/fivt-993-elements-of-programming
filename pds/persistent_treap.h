@@ -35,8 +35,13 @@ struct node{
   };
 
 
-	static const int MAXPRIORITY =	(int)1e+6;
+private:
+	int get_random_int(){
+		return ((rand()%10000) * 10000 + (rand() % 10000));
+	}
+public:
 
+	
 	T value;
 	int priority;
 	int size;
@@ -44,10 +49,10 @@ struct node{
 	const_spnode left;
 	const_spnode right;
 
-	explicit node (const T &value) : value(value), 
-						priority(rand()%MAXPRIORITY), 
-						size(1),
-						virt(false){
+	explicit node (const T &value): value(value), 
+									priority(get_random_int()), 
+									size(1),
+									virt(false){
 		left.nullify();
 		right.nullify();		
 	}
@@ -136,27 +141,28 @@ public:
 		return true;
 	}	
 
-	bool exist(const T & value){
+	const bool exist(const T & value){
 		return exist_(root_, value);
 	}
 
-	T get_kth(int value){
+	const T get_kth(int value){
 		return get_kth_(root_, value);
 	}
 
-	int size(){
-		return root_->size;
+	const int size(){
+		return (get_size(root_));		
 	}
 
-	void print_tree(){
+	const void print_tree(){
 		print_node(root_);
 	}
 
-private:
-	void construct_root(const T& value) {
-		root_->make_leaf(value);
+	const bool empty(){
+		return (size() == 0 ? true : false);
 	}
-	
+
+private:
+
 	void print_node(const const_spnode & root){
 		if (root == NULL) std::cout<< "null" << std::endl; else
 		{
@@ -166,7 +172,7 @@ private:
 		}
 	}
 
-	void check_null(const_spnode & nod){
+	void check_virt_node(const_spnode & nod){
 		if (nod == NULL) {
 			nod.make_virt_leaf(T());
 		} else
@@ -174,7 +180,7 @@ private:
 		return;		
 	}
 
-	void check_children(pnode & nod){
+	void check_virt_children(pnode & nod){
 		if (nod->left == NULL) nod->left.make_virt_leaf(T()); else
 			if (nod->left->virt) nod->left.nullify();
 		if (nod->right == NULL) nod->right.make_virt_leaf(T()); else
@@ -182,7 +188,7 @@ private:
 		return;
 	}
 
-	void check_children_null(pnode & nod){
+	void nullify_virt_children(pnode & nod){
 		if (nod->left != NULL && nod->left->virt) nod->left.nullify();
 		if (nod->right != NULL && nod->right->virt) nod->right.nullify();
 	}
@@ -192,58 +198,63 @@ private:
 			root->copy_pnode(new_node);
 		} else					
 			if (compare_priority(root, new_node) ){	
-				check_children(new_node);				
+				check_virt_children(new_node);				
 				pnode new_left = new_node->left.switch_to_mutable();				
 				pnode new_right = new_node->right.switch_to_mutable();				
 				split (root, new_node->value, new_left, new_right);		
-				check_children(new_node);							
+				check_virt_children(new_node);							
 				root->copy_pnode(new_node);				
 			} else {				
-				check_children(root);
-				
+				check_virt_children(root);				
 				pnode new_left = root->left.switch_to_mutable();
 				pnode new_right = root->right.switch_to_mutable();
 				insert ( (cmp_(new_node->value, root->value) ? new_left : new_right), new_node);				
-
-				check_children(root);				
+				check_virt_children(root);								
 			}
 		upd_size(root);
 	}
 
-	T get_kth_(const_spnode root, int x){
-		int left_size = (root->left == NULL ? 0 : root->left->size);
-		int right_size = (root->right == NULL ? 0 : root->right->size);
-		if (left_size == x-1) return root->value;
-		if (left_size >= x) return get_kth_(root->left, x);
-		return get_kth_(root->right, x - left_size - 1);
+	T get_kth_(const_spnode root, int index){
+		int left_size = get_size(root->left);
+		int right_size = get_size(root->right);
+		if (left_size == index - 1) return root->value;
+		if (left_size >= index) return get_kth_(root->left, index);
+		return get_kth_(root->right, index - left_size - 1);
 	}
 
-	bool exist_(const_spnode root, const T & x){
+	bool exist_(const_spnode root, const T & value){
 		if (root == NULL) return false;
-		if (root->value == x) return true;
-		if (cmp_(x, root->value)) return exist_(root->left, x); else
-								return exist_(root->right, x);
+		if (root->value == value) return true;
+		if (cmp_(value, root->value)) return exist_(root->left, value);
+									  else return exist_(root->right, value);
 	}
 
 	bool compare_priority(pnode n1, pnode n2){
 		if (n1->priority < n2->priority ||
-			(n1->priority == n2->priority && rand()%2 == 0) )
-			return true; else
-			return false;
+			(n1->priority == n2->priority && rand()%2 == 0) ) return true; 
+															  else return false;
 	}
 
 	void erase(pnode & root, const T & value){
-		if (!cmp_(root->value, value) && !cmp_(value, root->value)){
-			pnode new_left = root->left.switch_to_mutable();
-			pnode new_right = root->right.switch_to_mutable();
-			merge(root, new_left, new_right);
-			check_children_null(root);
-		} else{
+		if (cmp_(value,root->value)){
 			pnode new_root;
-			if (cmp_(value,root->value)) new_root = root->left.switch_to_mutable(); 
-				else new_root = root->right.switch_to_mutable();
+			new_root = root->left.switch_to_mutable();
 			erase (new_root, value);
-			check_children_null(root);
+			nullify_virt_children(root);
+		} else if (cmp_(root->value, value) ){
+			pnode new_root;
+			new_root = root->right.switch_to_mutable();
+			erase (new_root, value);
+			nullify_virt_children(root);
+		} else {
+			if (root->left == NULL) {
+				if (root->right == NULL) root->virt = true; else
+					root->copy_pnode(root->right.switch_to_mutable());
+			} else
+			if (root->right == NULL){
+					root->copy_pnode(root->left.switch_to_mutable());
+			}
+			nullify_virt_children(root);
 		}
 		upd_size(root);
 	}
@@ -272,17 +283,17 @@ private:
 		if (cmp_(x, root->value)) {
 			right->copy_pnode(root);			
 			left->virt = true;
-			check_null(right->left); 
+			check_virt_node(right->left); 
 			pnode new_right = right->left.switch_to_mutable();
 			split(new_right, x, left, new_right);			
-			check_null(right->left);
+			check_virt_node(right->left);
 		} else {			
 			left->copy_pnode(root);			
 			right->virt = true;
-			check_null(left->right);
+			check_virt_node(left->right);
 			pnode new_left = left->right.switch_to_mutable();
 			split(new_left, x, new_left, right);
-			check_null(left->right);
+			check_virt_node(left->right);
 		}
 		upd_size(left);
 		upd_size(right);
@@ -293,20 +304,18 @@ private:
 			root->virt = true;
 		} else
 		if (left == NULL || right == NULL){
-			root->copy_pnode( ( (left == NULL) ? right : left) );
+			root = ( (left == NULL) ? right : left) ;
 		} else
 			if (compare_priority(right, left) ){
-					root->copy_pnode(left);
-					check_null(root->right);
-					pnode new_left = root->right.switch_to_mutable();
-					merge(new_left, new_left, right);
-					check_null(root->right);
+				root = left;				
+				pnode new_left = (root->right == NULL ? NULL : root->right.switch_to_mutable());
+				merge(new_left, new_left, right);
+				check_virt_node(root->right);
 			} else {
-				root = right;
-				check_null(root->left);
-				pnode new_right = root->left.switch_to_mutable();
+				root = right;				
+				pnode new_right = (root->left == NULL ? NULL : root->left.switch_to_mutable());
 				merge(new_right, left, new_right);
-				check_null(root->left);
+				check_virt_node(root->left);
 			}
 		upd_size(root);
 	}
