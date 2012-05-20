@@ -4,7 +4,7 @@
 #include <memory>
 #include <assert.h>
 
-namespace psd{
+namespace pds{
 
 template<class T>
 class node{
@@ -70,6 +70,6 @@ public:
 
 }; // class persistent_stack
 
-} // namespace psd
+} // namespace pds
 
 #endif // PERSISTENT_STACK
