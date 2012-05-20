@@ -19,6 +19,7 @@ set (TESTS
   persistent_heap_multithreaded_test.cpp
   adviced_search_test.cpp
   persistent_trie_test.cpp
+  persistent_trie_multithreaded_test.cpp
 )
 
 add_executable (unittests
