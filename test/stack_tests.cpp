@@ -1,10 +1,11 @@
-#include <iostream>
+#include <gtest/gtest.h>
+
 #include <string>
 #include <stack>
 #include <assert.h>
 #include "persistent_stack.h"
 
-namespace stlext {
+namespace pds{
 
 TEST(persistent_stack_int, simple){
 	persistent_stack<int> s1;
@@ -58,32 +59,34 @@ TEST(persistent_stack_int, two_stacks_2){
 		ASSERT_EQ(i, t);
 	}
 	ASSERT_TRUE(s1.empty());
-	ASSERT_TRUE(s2.empty());
 	ASSERT_TRUE(s3.empty());
 }
 
 TEST(persistent_stask_string, two_stacks){
+	persistent_stack<std::string> t1;
+	persistent_stack<std::string> t2 = t1;
 	for (int i = 0; i < 10; i++)
 		t1.push("sdf");
 	for (int i = 0; i < 10; i++)
 		t2.push("qwe");
 	ASSERT_FALSE(t1.empty());
+	ASSERT_FALSE(t2.empty());
 	for (int i = 0; i < 10; i++) {
-		string t = t1.top();
+		std::string t = t1.top();
 		t1.pop();
 		ASSERT_EQ(t, "sdf");
 	}
 	ASSERT_TRUE(t1.empty());
 	for (int i = 0; i < 10; i++) {
-		string t = t2.top();
+		std::string t = t2.top();
 		t2.pop();
-		ASSERT_EQ(t, "sdf");
+		ASSERT_EQ(t, "qwe");
 	}
 	ASSERT_TRUE(t2.empty());
 }
 
 TEST(pesistent_stack_int, huge){
-	stack<int>* std_s = new stack<int>;
+	std::stack<int>* std_s = new std::stack<int>;
 	persistent_stack<int> per_s;
 	for (int i = 0; i <= 10000000; i++){
 		int r = rand();
