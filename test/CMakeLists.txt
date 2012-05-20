@@ -7,6 +7,13 @@ set (TESTS
   safe_distance_test.cpp
   seg_tree_test.cpp
   seg_tree_multithreaded_test.cpp
+  left_heap_test.cpp
+  left_heap_multithreaded_test.cpp
+  persistent_heap_test.cpp
+  persistent_heap_multithreaded_test.cpp
+  adviced_search_test.cpp
+  persistent_trie_test.cpp
+  persistent_trie_multithreaded_test.cpp
 )
 
 add_executable (unittests
