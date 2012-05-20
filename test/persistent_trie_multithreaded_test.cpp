@@ -35,7 +35,6 @@ namespace pds {
         }
 
         void insert(std::string str) {
-            std::cout << "insert " << str << std::endl;
             archive_.push_back(string2vector(str));
             trie_.add_word(string2vector(str));
         }
@@ -62,5 +61,6 @@ namespace pds {
         thread1.join();
         thread2.join();
         ASSERT_EQ(checker1.check(), true);
+        ASSERT_EQ(checker2.check(), true);
     }
 }
