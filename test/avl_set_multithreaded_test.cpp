@@ -6,7 +6,7 @@
 #include <cstdlib>
 #include <thread>
 
-#include "avl_set.h"
+#include "pds/avl_set.h"
 
 namespace pds {
 

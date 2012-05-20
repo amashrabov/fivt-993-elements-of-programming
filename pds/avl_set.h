@@ -15,6 +15,7 @@ class avl_set {
   typedef avl_tree_node<T> node_t;
   typedef typename node_t::node_ptr   node_ptr;
   typedef typename node_t::const_node_ptr const_node_ptr;
+  enum direction {LEFT, RIGHT};
 
   avl_set(): 
     size_(0) {}
@@ -64,10 +65,10 @@ class avl_set {
   void balance(const_node_ptr &ref);
 
   // A part of balancing algorithm.
-  void small_rotation(const_node_ptr &ref, bool inverse = false);
+  void small_rotation(const_node_ptr &ref, direction dir = LEFT);
 
   // A part of balancing algorith.
-  void big_rotation(const_node_ptr &ref, bool inverse = false);
+  void big_rotation(const_node_ptr &ref, direction dir = LEFT);
 
   // Consideing ref's both right and left
   // subtrees valid AVL trees updates ref's
@@ -233,18 +234,18 @@ void avl_set<T, Comparator>::balance(const_node_ptr &ref) {
 
   if (factor < -1) {
     if (get_factor(ref->child_[1]) > 0) {
-      big_rotation(ref);
+      big_rotation(ref, LEFT);
     }
     else {
-      small_rotation(ref);
+      small_rotation(ref, LEFT);
     } 
   }
   else if (factor > 1) {
     if (get_factor(ref->child_[0]) < 0) {
-      big_rotation(ref, true);
+      big_rotation(ref, RIGHT);
     }
     else {
-      small_rotation(ref, true);
+      small_rotation(ref, RIGHT);
     } 
   }  
 }
@@ -283,7 +284,8 @@ bool avl_set<T, Comparator>::empty() const {
 //     / \       L   C
 //    C   R
 template<class T, class Comparator>
-void avl_set<T, Comparator>::small_rotation(const_node_ptr &ref, bool inverse) {
+void avl_set<T, Comparator>::small_rotation(const_node_ptr &ref, direction dir) {
+  bool inverse = (dir == RIGHT);
 
   // (ref)        (a_tmp)
   //   |             | 
@@ -333,7 +335,9 @@ void avl_set<T, Comparator>::small_rotation(const_node_ptr &ref, bool inverse) {
 //   / \     L   M N   R
 //  M   N         
 template<class T, class Comparator>
-void avl_set<T, Comparator>::big_rotation(const_node_ptr &ref, bool inverse) {
+void avl_set<T, Comparator>::big_rotation(const_node_ptr &ref, direction dir) {
+  bool inverse = (dir == RIGHT);
+
   //              (c_tmp)
   //                 |  
   //   a             a   
