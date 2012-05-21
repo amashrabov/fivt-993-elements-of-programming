@@ -10,9 +10,7 @@ namespace pds {
 template<class T>
 struct avl_tree_node {
   typedef avl_tree_node<T>* node_ptr;
-  typedef avl_tree_node<T>* const node_cptr;
-  typedef pds_ptr<avl_tree_node<T> > node_sptr;
-  typedef pds_ptr<const avl_tree_node<T> > node_csptr;
+  typedef pds_ptr<avl_tree_node<T> > const_node_ptr;
 
   template <class ... Args>
   avl_tree_node(Args... args):
@@ -28,7 +26,7 @@ struct avl_tree_node {
 
   int height_;
   T value_;
-  node_csptr child_[2];
+  const_node_ptr child_[2];
 };
 
 }; // namespace pds

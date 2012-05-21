@@ -4,11 +4,11 @@
 #include <vector>
 #include <cstdlib>
 
-#include "stlext/vector.h"
+#include "pds/vector.h"
 
 TEST(Vector, SimplePushBack) {
   const int TEST_SIZE = 40;
-  stlext::vector<int> v;
+  pds::vector<int> v;
 
   for (int i = 0; i < TEST_SIZE; ++i) {
     v.push_back(i);
@@ -21,7 +21,7 @@ TEST(Vector, SimplePushBack) {
 
 TEST(Vector, ReferenceToElement) {
   const int TEST_SIZE = 40;
-  stlext::vector<int> v;
+  pds::vector<int> v;
 
   for (int i = 0; i < TEST_SIZE; ++i) {
     v.push_back(i);
@@ -37,7 +37,7 @@ TEST(Vector, ReferenceToElement) {
 }
 
 template<class T>
-bool is_vectors_equal(const stlext::vector<T>& our_vector,
+bool is_vectors_equal(const pds::vector<T>& our_vector,
                       const std::vector<T>& stl_vector) {
   if (our_vector.size() != stl_vector.size()) {
     return false;
@@ -56,7 +56,7 @@ TEST(Vector, RandomAccess) {
   const int VECTOR_SIZE = 50,
             NUMBER_OF_OPERATIONS = 1000;
 
-  stlext::vector<int> our_vector;
+  pds::vector<int> our_vector;
   std::vector<int> stl_vector;
 
   for (int i = 0; i < VECTOR_SIZE; ++i) {
@@ -82,7 +82,7 @@ TEST(Vector, Persistence) {
             NUMBER_OF_OPERATIONS = 1000,
             COPYING_FREQUENCY = 10;
 
-  stlext::vector<int> our_vector, copy_of_our_vector;
+  pds::vector<int> our_vector, copy_of_our_vector;
   std::vector<int> stl_vector, copy_of_stl_vector;
 
   for (int i = 0; i < VECTOR_SIZE; ++i) {
@@ -112,7 +112,7 @@ TEST(Vector, Persistence) {
 TEST(Vector, PopBack) {
   const int TEST_SIZE = 100;
 
-  stlext::vector<int> vector;
+  pds::vector<int> vector;
 
   for (int i = 0; i < TEST_SIZE; ++i) {
     vector.push_back(i);

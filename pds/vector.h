@@ -4,15 +4,16 @@
 #include <iostream>
 #include <cassert>
 #include <stdexcept>
+#include <memory>
 
-#include <boost/make_shared.hpp>
-#include <boost/smart_ptr.hpp>
+#include "pds_ptr.h"
 
 namespace pds {
 
-using boost::shared_ptr;
-using boost::static_pointer_cast;
-using boost::make_shared;
+using std::shared_ptr;
+using std::static_pointer_cast;
+using std::const_pointer_cast;
+using std::make_shared;
 
 static const size_t ARITY = 8,
                     LOG_ARITY = 3,
@@ -212,8 +213,13 @@ class vector {
   template<class NodeType>
   shared_ptr<NodeType> make_copy(const shared_ptr<const node_base>& node) {
     if (node) {
-      return make_shared<NodeType>(
+      if (node.unique()) {
+        return const_pointer_cast<NodeType>(
+          static_pointer_cast<const NodeType>(node));
+      } else {
+        return make_shared<NodeType>(
           *static_pointer_cast<const NodeType>(node));
+      }
     } else {
       return make_shared<NodeType>();
     }
@@ -232,8 +238,6 @@ class vector {
         const shared_ptr<const node_base>& node,
         size_t index, size_t height,
         const shared_ptr<const T>& new_element) {
-//    std::cerr << "insert(..., " << index << ", "
-//              << height << ", ...)" << std::endl;
     if (1 == height) {
       shared_ptr<leaf_node> new_leaf = make_copy<leaf_node>(node);
 
@@ -252,8 +256,6 @@ class vector {
 
   const T& get_element_recur(const shared_ptr<const node_base>& node,
                              size_t index, size_t height) const {
-//    std::cerr << "get_element(..., " << index << ", "
-//              << height << ")" << std::endl;
     if (1 == height) {
       const shared_ptr<const leaf_node>& leaf =
           static_pointer_cast<const leaf_node>(node);

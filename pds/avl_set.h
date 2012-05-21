@@ -7,15 +7,15 @@
 
 namespace pds {
 
+
 template<class T, class Comparator = std::less<T> >
 class avl_set {
  public:
+
   typedef avl_tree_node<T> node_t;
   typedef typename node_t::node_ptr   node_ptr;
-  typedef typename node_t::node_cptr  node_cptr;
-  typedef typename node_t::node_sptr  node_sptr;
-  typedef typename node_t::node_csptr node_csptr;
-
+  typedef typename node_t::const_node_ptr const_node_ptr;
+  enum direction {LEFT, RIGHT};
 
   avl_set(): 
     size_(0) {}
@@ -24,42 +24,77 @@ class avl_set {
     size_(set.size_),
     root_(set.root_) {}
  
+  // Returns true if element was inserted,
+  // false if element was already present.
   bool insert(const T &value);
-  bool remove(const T &value);
+
+  // Returns true if element was erased,
+  // false if element was not present.
+  bool erase(const T &value);
+
+  // Returns true if element is present,
+  // false otherwise.
   bool contains(const T &value) const;
 
+  // Returns the number of elements.
   size_t size() const;
 
+  // Retuns if set is empty
+  bool empty() const;
+
  private:
-  bool insert(const T &value, node_csptr &ref);
-  bool remove(const T &value, node_csptr &ref);
-  void replace(node_csptr &ref, T &value, int dir);
+  // Recursive insertion function. Returns true
+  // if after insertion ref subtree was changed
+  // false othrwise. If  element already exists
+  // and force == true element will be overwritten.
+  bool insert(const T &value, const_node_ptr &ref, bool force = false);
 
-  void balance(node_csptr &ref);
-  void small_rotation(node_csptr &ref, bool inverse = false);
-  void big_rotation(node_csptr &ref, bool inverse = false);
-  void update_height(node_csptr &ref);  
+  // erases the value from ref subtree.
+  // Returns true if elemnt was erased,
+  // false if element was not present.
+  bool erase(const T &value, const_node_ptr &ref);
 
-  int get_factor(const node_csptr &node) const;
-  int get_height(const node_csptr &node) const;
+  // A part of removal algorithm. Finds
+  // substitution for erased element
+  // and swaps the values. 
+  void replace(const_node_ptr &ref, T &value, int dir);
 
-  int neg(int i, bool inverse) {
+  // Consideing ref's both right and left
+  // subtrees valid AVL trees balances
+  // ref according to AVL rule.
+  void balance(const_node_ptr &ref);
+
+  // A part of balancing algorithm.
+  void small_rotation(const_node_ptr &ref, direction dir = LEFT);
+
+  // A part of balancing algorith.
+  void big_rotation(const_node_ptr &ref, direction dir = LEFT);
+
+  // Consideing ref's both right and left
+  // subtrees valid AVL trees updates ref's
+  // height.
+  void update_height(const_node_ptr &ref);  
+
+  int get_factor(const const_node_ptr &node) const;
+  int get_height(const const_node_ptr &node) const;
+
+  inline int neg(int i, bool inverse = true) {
     return inverse? i ^ 0x01 : i;
   }
 
-  node_csptr root_;
+  const_node_ptr root_;
   size_t size_;
   Comparator compare_;
 };
 
 template<class T, class Comparator>
-int avl_set<T, Comparator>::get_height(const node_csptr &node) const {
-  return (node.get() == NULL)? 0 : node->height_;
+int avl_set<T, Comparator>::get_height(const const_node_ptr &node) const {
+  return (node.get() == nullptr)? 0 : node->height_;
 }
 
 template<class T, class Comparator>
-int avl_set<T, Comparator>::get_factor(const node_csptr &node) const {
-  if (node.get() == NULL)
+int avl_set<T, Comparator>::get_factor(const const_node_ptr &node) const {
+  if (node.get() == nullptr)
     return 0;
 
   return get_height(node->child_[0]) - get_height(node->child_[1]);
@@ -71,7 +106,7 @@ bool avl_set<T, Comparator>::contains(const T& value) const {
   auto node = root_;
 
   while (true) {
-    if (node.get() == NULL)
+    if (node.get() == nullptr)
       return false;
 
     if (node->value_ == value)
@@ -82,185 +117,150 @@ bool avl_set<T, Comparator>::contains(const T& value) const {
   }
 }
 
+
 template<class T, class Comparator>
 bool avl_set<T, Comparator>::insert(const T &value) {
   return insert(value, root_);
 }
 
 
-
 template<class T, class Comparator>
-bool avl_set<T, Comparator>::insert(const T &value, node_csptr &ref) {
-  // The place to insert is reached
-  // Creationg new leaf here.
-  if (ref.get() == NULL) {
+bool avl_set<T, Comparator>::insert(const T &value, const_node_ptr &ref, bool force) {
+  // Insertion
+  if (ref.get() == nullptr) {
     ref = new node_t(value);
     ++size_;
     return true;
   }
     
-  // The value already exists. No insertions are needed.
-  if (ref->value_ == value)
-    return false;
+  // The value already exists
+  if (ref->value_ == value) {
+    if (force)
+      ref.switch_to_mutable()->value_ = std::move(T(value));
+
+    return force;
+  }
   
-  size_t index = (compare_(value, ref->value_))? 0 : 1;
-  
-  // After insertion child_cpy will contain new 
-  // root of child's subtree.
-  node_csptr child_cpy = ref->child_[index];
-  bool answ = insert(value, child_cpy);
-  // If new child's root changed we must make a
-  // copy of this node and change reference to
-  // this subtree.
-  if (child_cpy != ref->child_[index]) {
-    // Copying the node
-    // TODO do we need copier here if new shared pointer
-    // is constructed anyways?
-    // Updating the node
-    node_ptr ref_mut = const_cast<node_ptr>(ref.switch_to_mutable());
-    ref_mut->child_[index] = child_cpy;
-    // Balancing subtree of the node
+  size_t index = compare_(value, ref->value_)? 0 : 1;
+  const_node_ptr child_cpy = ref->child_[index];
+
+  // If new child's subtree has changed
+  if (insert(value, child_cpy)) {
+    ref.switch_to_mutable()->child_[index] = std::move(child_cpy);
     balance(ref);
+    return true;
   }
 
-  return answ;
+  return false;
 }
 
 
 template<class T, class Comparator>
-bool avl_set<T, Comparator>::remove(const T& value) {
-  if (root_.get() == NULL) {
+bool avl_set<T, Comparator>::erase(const T& value) {
+  if (root_.get() == nullptr)
     return false;
-  }
 
-  bool ans = remove(value, root_);
+  bool ans;
 
-  if (ans) {
+  if (ans = erase(value, root_))
     --size_;
-  }
 
   return ans;
 }
 
 template<class T, class Comparator>
-bool avl_set<T, Comparator>::remove(const T &value, node_csptr &ref) {
-  // We are in the node we want to delete
-  // So we delete it.
+bool avl_set<T, Comparator>::erase(const T &value, const_node_ptr &ref) {
+  // Node to erase
   if (ref->value_ == value) {
-    // If this is a list - everything is
-    // very simple. Just deleting it.
+    // List case
     if (ref->height_ == 1) {
-      ref = node_csptr();
+      ref.reset();
     }
-    // If this is not a list - a substitution
-    // for this node is needed. Searching for
-    // this substitution is initiated.
+    // Substitution seach
     else {  
       int index = (get_factor(ref) > 0) ? 0 : 1;
-      int dir = index ^ 0x01;
-      // TODO the first time writing like this. If anything happens - check this line
-      node_ptr new_node = const_cast<node_ptr>(ref.switch_to_mutable());
-      replace(new_node->child_[index], new_node->value_, dir);
+      node_ptr ref_mut = ref.switch_to_mutable();
+      replace(ref_mut->child_[index], ref_mut->value_, neg(index));
       balance(ref);
     }
 
     return true;
   }
 
-  // The node to delete is not yet found
-  // So continuing search.
-  bool answ = false;
+  // Continue search
   size_t index = (compare_(value, ref->value_))? 0 : 1; 
-  if (ref->child_[index].get() != NULL) {
-    node_csptr child_cpy = ref->child_[index];
-    answ = remove(value, child_cpy);
 
-    // Checking if we have to update current 
-    if (child_cpy != ref->child_[index]) {
-      node_ptr new_node = const_cast<node_ptr>(ref.switch_to_mutable());
-      new_node->child_[index] = child_cpy;
+  if (ref->child_[index].get() != nullptr) {
+    const_node_ptr child_cpy = ref->child_[index];
+
+    // Checking if we have to update current
+    if (erase(value, child_cpy)) {
+      ref.switch_to_mutable()->child_[index] = std::move(child_cpy);
+      balance(ref);
+      return true;
     }
   }
 
-  balance(ref);
-  return answ;
+  return false;
 }
 
 
 template<class T, class Comparator>
-void avl_set<T, Comparator>::replace(node_csptr &ref, T &value, int dir) {
+void avl_set<T, Comparator>::replace(const_node_ptr &ref, T &value, int dir) {
   int child_index = dir;
 
-  // If no further movement in given direction
-  // is possible - we must perform some actions
-  if (ref->child_[dir].get() == NULL) {
-    // The value is not needed here
+  // No more moving in given direction possible
+  if (ref->child_[dir].get() == nullptr) {
     value = std::move(ref->value_);
-
-    // If the replacement is a leaf
-    // just forgetting about it.
-    if (ref->height_ == 1) {
-      ref = node_csptr();
-    }
-    // If this is not a leaf then the 
-    // node only has one child.We put
-    // this child into parentr's place.
-    else {
-      // This reverts the last bit of dir.
-      // It converts 1 to 0 and 0 to 1.
-      ref = ref->child_[dir ^= 0x01];
-    }
-
-    // Everything we wanted to do is done
+    // If leaf - deleting this node, else replacing
+    // by th only child.
+    ref = (ref->height_ == 1)? const_node_ptr() : 
+                               ref->child_[neg(dir)];
     return;
   }
 
-  // Going further till we reach the bottom.
-  // We have to update all the nodes cause
-  // replacing element will always be deleted.
-  node_ptr new_node = const_cast<node_ptr>(ref.switch_to_mutable());
-  replace(new_node->child_[dir], value, dir);
+  replace(ref.switch_to_mutable()->child_[dir], value, dir);
   balance(ref);
 }
 
 
 template<class T, class Comparator>
-void avl_set<T, Comparator>::balance(node_csptr &ref) {
-  update_height(ref);
+void avl_set<T, Comparator>::balance(const_node_ptr &ref) {
+  if (ref.get() == nullptr)
+    return;
 
-  if (get_factor(ref) <= -2) {
-    if (get_factor(ref->child_[1]) <= 0) {
-      small_rotation(ref);
+  update_height(ref);
+  int factor = get_factor(ref);
+
+  if (factor < -1) {
+    if (get_factor(ref->child_[1]) > 0) {
+      big_rotation(ref, LEFT);
     }
     else {
-      big_rotation(ref);
+      small_rotation(ref, LEFT);
     } 
   }
-  else if (get_factor(ref) >= 2) {
-    if (get_factor(ref->child_[0]) >= 0) {
-      small_rotation(ref, true);
+  else if (factor > 1) {
+    if (get_factor(ref->child_[0]) < 0) {
+      big_rotation(ref, RIGHT);
     }
     else {
-      big_rotation(ref, true);
+      small_rotation(ref, RIGHT);
     } 
   }  
 }
 
-template<class T, class Comparator>
-void avl_set<T, Comparator>::update_height(node_csptr &ref) {
-  if (ref.get() == NULL)
-    return;
 
+template<class T, class Comparator>
+void avl_set<T, Comparator>::update_height(const_node_ptr &ref) {
   int l_h = get_height(ref->child_[0]);
   int r_h = get_height(ref->child_[1]);
   int new_height = std::max(l_h, r_h) + 1;
   
   if (ref->height_ != new_height) {
-    node_ptr new_node = const_cast<node_ptr>(ref.switch_to_mutable());
-    new_node->height_ = new_height;
+    ref.switch_to_mutable()->height_ = new_height;
   }
 }
-
 
 
 template<class T, class Comparator>
@@ -269,8 +269,13 @@ size_t avl_set<T, Comparator>::size() const {
 }
 
 
+template<class T, class Comparator>
+bool avl_set<T, Comparator>::empty() const {
+  return (size_ == 0);
+}
 
-// root             root
+
+// (ref)           (ref)
 //   |               |
 //   a               b  
 //  / \             / \
@@ -278,107 +283,113 @@ size_t avl_set<T, Comparator>::size() const {
 //      b         / \   R
 //     / \       L   C
 //    C   R
-// L, C, R nodes don't change
-// a, b nodes do change
 template<class T, class Comparator>
-void avl_set<T, Comparator>::small_rotation(node_csptr &ref, bool inverse) {
+void avl_set<T, Comparator>::small_rotation(const_node_ptr &ref, direction dir) {
+  bool inverse = (dir == RIGHT);
 
-  //  ref        root a_tmp     
-  //   |            \ /  
+  // (ref)        (a_tmp)
+  //   |             | 
   //   a             a   
-  //  / \           / \  b_tmp
+  //  / \           / \ (b_tmp)
   // L   \    ==>  L   \ /
   //      b             b
   //     / \           / \
   //    C   R         C   R
-  node_ptr a = const_cast<node_ptr>(ref.switch_to_mutable());
+  node_ptr a = ref.switch_to_mutable();
   auto a_tmp = ref;
   
-  node_ptr b = const_cast<node_ptr>(a->child_[neg(1, inverse)].switch_to_mutable());
+  node_ptr b = a->child_[neg(1, inverse)].switch_to_mutable();
   auto b_tmp = a->child_[neg(1, inverse)];
 
-  //root a_tmp     a_tmp     
-  //  \ /            |  
-  //   a             a   
-  //  / \  b_tmp    / \   root
-  // L   \ /  ==>  L   C  /
-  //      b              b
-  //     / \            / \
-  //    C   R          C   R
-  a->child_[neg(1, inverse)] = b->child_[neg(0, inverse)];
+  //(a_tmp)      (a_tmp)(b_tmp)
+  //   |            \     /
+  //   a             a   b
+  //  / \ (b_tmp)   / \ / \
+  // L   \ /  ==>  L   C  R
+  //      b              
+  //     / \            
+  //    C   R          
+  a->child_[neg(1, inverse)] = std::move(b->child_[neg(0, inverse)]);
 
-  // a_tmp            root
-  //   |                |
-  //   a                b
-  //  / \   root ==>   / \
-  // L   C  /         a   R
-  //       b         / \
-  //      / \       L   C
-  //     ?   R
-  b->child_[neg(0, inverse)] = a_tmp;
+  //(a_tmp)(b_tmp)   (b_tmp)
+  //  \     /           |
+  //   a   b    (a_tmp) b
+  //  / \ / \        \ / \
+  // L   C   R  ==>   a   R
+  //                 / \
+  //                L   C
+  b->child_[neg(0, inverse)] = std::move(a_tmp);
  
   // Updating heights
-  update_height(const_cast<node_csptr&>(b->child_[neg(0, inverse)]));
+  update_height(b->child_[neg(0, inverse)]);
   update_height(b_tmp);
   ref = b_tmp;
 }
 
-
+//   a             c   
+//  / \           / \ 
+// L   \    ==>  /   \
+//      b       a     b
+//     / \     / \   / \
+/    c   R    /  \  /  \
+//   / \     L   M N   R
+//  M   N         
 template<class T, class Comparator>
-void avl_set<T, Comparator>::big_rotation(node_csptr &ref, bool inverse) {
-  // root        root  a_tmp     
-  //   |            \ /  
+void avl_set<T, Comparator>::big_rotation(const_node_ptr &ref, direction dir) {
+  bool inverse = (dir == RIGHT);
+
+  //              (c_tmp)
+  //                 |  
   //   a             a   
-  //  / \           / \  b_tmp
+  //  / \           / \ (b_tmp)
   // L   \    ==>  L   \ /
   //      b             b
-  //     / \    c_tmp  / \
+  //     / \   (c_tmp) / \
   //    c   R       \ /   R
   //   / \           c 
   //  M   N         / \
   //               M   N
-  node_ptr a = const_cast<node_ptr>(ref.switch_to_mutable());
+  node_ptr a = ref.switch_to_mutable();
   auto a_tmp = ref;
 
-  node_ptr b = const_cast<node_ptr>(a->child_[inverse? 0 : 1].switch_to_mutable());
+  node_ptr b = a->child_[inverse? 0 : 1].switch_to_mutable();
   auto b_tmp = a->child_[inverse? 0 : 1];
 
-  node_ptr c = const_cast<node_ptr>(b->child_[inverse? 1 : 0].switch_to_mutable());
+  node_ptr c = b->child_[inverse? 1 : 0].switch_to_mutable();
   auto c_tmp = b->child_[inverse? 1 : 0];
 
-  //  root a_tmp         a_tmp 
-  //     \ /               |
-  //      a                a
-  //     / \  b_tmp       / \     b_tmp
-  //    L   \ /          L   M      |
-  //         b      ==>             b
-  // c_tmp  / \              root  / \
-  //     \ /   R               |  N   R
-  //      c                    c
-  //     / \                  / \
-  //    M   N                M   N
-  
-  // root_child is a now
-  a->child_[neg(1, inverse)] = c->child_[neg(0, inverse)];
-  b->child_[neg(0, inverse)] = c->child_[neg(1, inverse)];
+  //   (a_tmp)         (a_tmp) 
+  //      |               |
+  //      a               a
+  //     / \ (b_tmp)     / \     (b_tmp)
+  //    L   \ /         L   M      |
+  //         b      ==>            b
+
+  // (c_tmp)/ \          (c_tmp)  / \
+  //     \ /   R            |    N   R
+  //      c                 c
+  //     / \               / \
+  //    M   N             M   N
+  a->child_[neg(1, inverse)] = std::move(c->child_[neg(0, inverse)]);
+  b->child_[neg(0, inverse)] = std::move(c->child_[neg(1, inverse)]);
  
-  //   a_tmp                  root
+  //  (a_tmp)                (c_tmp)
   //     |                     |
   //     a                     c
-  //    / \   b_tmp           / \
-  //   L   M    |    ==>     /   \
-  //            b           a     b
-  //     root  / \         / \   / \
-  //       |  N   R       L   M N   R
+  //    / \    (b_tmp)        / \
+  //   L   M      |    ==>   /   \
+  //              b         a     b
+  //    (c_tmp)  / \       / \   / \
+  //       |    N   R     L   M N   R
   //       c
   //      / \
   //     M   N
-  c->child_[inverse? 1 : 0] = a_tmp;
-  c->child_[inverse? 0 : 1] = b_tmp;
+  c->child_[neg(0, inverse)] = std::move(a_tmp);
+  c->child_[neg(1, inverse)] = std::move(b_tmp);
 
   // Updating heights
-  update_height(c->child_[inverse? 1 : 0]);
-  update_height(c->child_[inverse? 0 : 1]);
+  update_height(c->child_[neg(0, inverse)]);
+  update_height(c->child_[neg(1, inverse)]);
   update_height(c_tmp);
   ref = c_tmp;
 }
