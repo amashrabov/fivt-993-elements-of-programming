@@ -6,7 +6,7 @@ include_directories(${CMAKE_SOURCE_DIR}/pds)
 
 set (TESTS
   static_rsq_test.cc
-  vector_test.cc
+  vector_test.cpp
   safe_distance_test.cpp
   simple_seg_tree.h  
   seg_tree_test.cpp
