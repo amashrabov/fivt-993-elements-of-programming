@@ -29,6 +29,32 @@ TEST(left_heap, simple) {
   }
 }
 
+TEST(left_heap, merge_simple) {
+  left_heap<int> h1;
+  left_heap<int> h2;
+  int size = 20;
+  for (size_t i = 0; i < size; i++) {
+    h1.push(i);
+    h2.push(size+i);
+  }
+  h1.merge(h2);
+  for (size_t i = 0; i < size*2; i++) {
+    ASSERT_EQ(i, h1.top());
+    h1.pop();
+  }
+  h1.clear();
+  h2.clear();
+  for (size_t i = size; i > 0; i--) {
+    h1.push(i);
+    h2.push(size+i);
+  }
+  h1.merge(h2);
+  for (size_t i = 1; i <= size*2; i++) {
+    ASSERT_EQ(i, h1.top());
+    h1.pop();
+  }
+}
+
 TEST(left_heap, random_vector) {
   std::vector<int> v;
   int size = 100;
@@ -61,6 +87,31 @@ TEST(left_heap, stress_random_vector) {
   }
 }
 
+TEST(left_heap, merge_stress_random_vector) {
+  int size = 100000;
+  for (size_t j = 0; j < 10; j++) {
+    std::srand(j);
+    std::vector<int> v1,v2;
+    for (size_t i = 0; i < size; i++) {
+      v1.push_back(i);
+      v2.push_back(i);
+    }
+    random_shuffle(v1.begin(), v1.end());
+    random_shuffle(v2.begin(), v2.end());
+    left_heap<int> h1,h2;
+    h1.push(v1.begin(), v1.end());
+    h2.push(v2.begin(), v2.end());
+    h1.merge(h2);
+    for (size_t i = 0; i < size; i++) {
+      ASSERT_EQ(i, h1.top());
+      h1.pop();
+      ASSERT_EQ(i, h1.top());
+      h1.pop();
+      ASSERT_EQ(i, h2.top());
+      h2.pop();
+    }
+  }
+}
 
 TEST(left_heap, stress_random_vector_priority_queue) {
   int size = 100000;

@@ -18,6 +18,7 @@
 namespace pds{
 
 namespace internal{
+
 template<class T>
 struct node{
 public:
@@ -191,7 +192,7 @@ public:
     size_--;
   }
 
-  void merge(const left_heap &tree){
+  void merge(left_heap tree){
     root_ = internal::merge_nodes<T, Comparator> (root_, tree.root_, cmp_);
     size_ += tree.size();
   }
