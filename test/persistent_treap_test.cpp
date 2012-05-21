@@ -8,7 +8,6 @@
 #include "persistent_treap.h"
 #include <gtest/gtest.h>
 
-const int rand_mod = 10000;
 
 std::string inttostr(int number)
 {
@@ -19,17 +18,9 @@ std::string inttostr(int number)
 
 
 int get_rand(){
-	srand(time(NULL));
-	return (rand()%rand_mod) * rand_mod + (rand()%rand_mod);
-}
-
-TEST(persistent_treap, check_check){
-	persistent_treap<int> t;
-	t.clear();
-	t.push(1);
-	int i = 1;
-	ASSERT_EQ(i, t.get_kth(1));
-}
+		if (RAND_MAX >= 32768) return rand();
+		return (rand() << 15) ^ (rand());
+	}
 
 TEST(persistent_treap, access_by_order_and_persistence){
 	int T_SIZE = 10;
