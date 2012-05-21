@@ -5,6 +5,10 @@ include_directories(${CMAKE_SOURCE_DIR}/stlext)
 include_directories(${CMAKE_SOURCE_DIR}/pds)
 
 set (TESTS
+  stack_tests.cpp
+  fenwick_tree_test.cpp
+  static_rmq_test.cpp
+  static_rsq_test.cpp
   static_rsq_test.cc
   vector_test.cpp
   safe_distance_test.cpp
