@@ -23,15 +23,17 @@ int get_rand(){
 	}
 
 TEST(persistent_treap, access_by_order_and_persistence){
-	int T_SIZE = 10;
-	int T_NUMBER = 100;
+	int T_SIZE = 100;
+	int T_NUMBER = 10;
 	srand(time(NULL));
 	std::vector<int> a[T_NUMBER];
 	persistent_treap <int> t[T_NUMBER];
 	t[0].clear();
 	for (int test = 0; test < T_NUMBER; test++){
-		if (test > 0) t[test] = persistent_treap<int>(t[test-1]);
-		if (test > 0) a[test] = a[test-1];
+		if (test > 0) {
+			t[test] = persistent_treap<int>(t[test-1]);
+			a[test] = a[test-1];
+		}
 		for (int i = 1; i <= T_SIZE; ++i){
 			int k = get_rand();
 			a[test].push_back(k);

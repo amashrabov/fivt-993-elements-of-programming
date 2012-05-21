@@ -13,6 +13,7 @@ set (TESTS
   left_heap_multithreaded_test.cpp
   persistent_heap_test.cpp
   persistent_heap_multithreaded_test.cpp
+  persistent_treap_test.cpp
   persistent_trie_test.cpp
   persistent_trie_multithreaded_test.cpp
   safe_distance_test.cpp
