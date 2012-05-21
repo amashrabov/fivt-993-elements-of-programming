@@ -44,7 +44,7 @@ TEST(persistent_treap, access_by_order_and_persistence){
 		ASSERT_EQ(t[test].size(), a[test].size());		
 	}
 
-	for (int test = 0; test < 10; test++) std::sort(a[test].begin(), a[test].end());
+	for (int test = 0; test < T_NUMBER; test++) std::sort(a[test].begin(), a[test].end());
 
 	for (int test = 0; test < T_NUMBER; test++){
 		for (int i = 1; i <= a[test].size(); ++i){
