@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 
+include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/stlext)
 include_directories(${CMAKE_SOURCE_DIR}/pds)
 
@@ -8,6 +9,8 @@ set (TESTS
   fenwick_tree_test.cpp
   static_rmq_test.cpp
   static_rsq_test.cpp
+  static_rsq_test.cc
+  vector_test.cpp
   safe_distance_test.cpp
   simple_seg_tree.h  
   seg_tree_test.cpp
