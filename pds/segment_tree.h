@@ -1,5 +1,5 @@
-#ifndef _SEGMENT_TREE_DPR_PAVLIN_
-#define _SEGMENT_TREE_DPR_PAVLIN_
+#ifndef _SEGMENT_TREE_H_
+#define _SEGMENT_TREE_H_
 
 #include <cassert>
 #include <functional>
