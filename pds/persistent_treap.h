@@ -77,16 +77,6 @@ public:
 	persistent_treap() : root_(){		
 	}
 
-	persistent_treap (const persistent_treap<T, Comparator> & base_treap):
-	root_(base_treap.root_),
-		cmp_(base_treap.cmp_){
-	}
-
-	void operator =(const persistent_treap<T, Comparator> & base_treap) {
-		this->root_ = base_treap.root_;		
-		this->cmp_ = base_treap.cmp_;		
-	}
-
 	bool push(const T &value){
 		if (exist(value)) return false;
 		if (root_ == NULL) {			
@@ -113,29 +103,29 @@ public:
 		return true;
 	}	
 
-	const bool exist(const T & value){
+	bool exist(const T & value)const{
 		return exist_(root_, value);
 	}
 
-	const T get_kth(int value){
+	T get_kth(int value)const{
 		return get_kth_(root_, value);
 	}
 
-	const int size(){
+	int size()const{
 		return (get_size(root_));		
 	}
 
-	const void print_tree(){
+	void print_tree() const{
 		print_node(root_);
 	}
 
-	const bool empty(){
+	bool empty() const{
 		return (size() == 0 ? true : false);
 	}
 
 private:
 
-	void print_node(const const_spnode & root){
+	void print_node (const const_spnode & root)const{
 		if (root == NULL) std::cout<< "null" << std::endl; else
 		{
 			std::cout << root->value << " " << root->priority << std::endl;
@@ -186,7 +176,7 @@ private:
 			upd_size(root);
 	}
 
-	T get_kth_(const_spnode root, int index){
+	T get_kth_(const const_spnode root, int index)const{
 		int left_size = get_size(root->left);
 		int right_size = get_size(root->right);
 		if (left_size == index - 1) return root->value;
@@ -194,14 +184,14 @@ private:
 		return get_kth_(root->right, index - left_size - 1);
 	}
 
-	bool exist_(const_spnode root, const T & value){
+	bool exist_(const_spnode root, const T & value)const{
 		if (root == NULL) return false;
 		if (root->value == value) return true;
 		if (cmp_(value, root->value)) return exist_(root->left, value);
 		else return exist_(root->right, value);
 	}
 
-	bool compare_priority(pnode n1, pnode n2){
+	bool compare_priority(pnode n1, pnode n2)const{
 		if (n1->priority < n2->priority ||
 			(n1->priority == n2->priority && rand()%2 == 0) ) return true; 
 		else return false;
@@ -231,11 +221,11 @@ private:
 		upd_size(root);
 	}
 
-	int get_size(pnode root){
+	int get_size(pnode root)const{
 		if (root == NULL) return 0; else return root->size;
 	}
 
-	int get_size(const_spnode root){
+	int get_size(const_spnode root)const{
 		if (root == NULL) return 0; else return root->size;
 	}
 
