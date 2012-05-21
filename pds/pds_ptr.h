@@ -3,35 +3,36 @@
 
 #include <memory>
 
-namespace pds { // Persistent Data Structures
+namespace pds {
 
 template <class Node>
 class pds_ptr: public std::shared_ptr<const Node> {
-  
-  public:
-  
-  pds_ptr() : base() {}
 
-  pds_ptr(Node* node_ptr) : base(node_ptr) {}
+  public:
+
+  pds_ptr() : base() {
+  }
+
+  pds_ptr(Node* node_ptr) : base(node_ptr) {
+  }
 
   Node* switch_to_mutable() {
-    if (!this->get()) return NULL;
     if (this->unique()) {
       return const_cast<Node*>((this->get()));
     } else {
       Node* my_clone(new Node(**this));
-      this->base::operator = (static_cast<base>(my_clone));
+      this->base::operator=(static_cast<base>(my_clone));
       return my_clone;
     }
   }
 
-  void operator = (Node* node_ptr) {
+  void operator=(Node* node_ptr) {
     this->base::operator=(static_cast<base>(node_ptr));
   }
 
 
-  void operator = (std::unique_ptr<Node> node_ptr) {
-    this->base::operator = (static_cast<base>(node_ptr));
+  void operator=(std::unique_ptr<Node> node_ptr) {
+    this->base::operator=(static_cast<base>(node_ptr));
   }
 
   private:
