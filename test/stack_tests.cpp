@@ -17,7 +17,7 @@ TEST(persistent_stack_int, simple){
 		s1.pop();
 		 ASSERT_EQ(t, i);
 	}
-	 ASSERT_TRUE(s1.empty());
+	ASSERT_TRUE(s1.empty());
 }
 
 TEST(persistent_stack_int, two_stacks_1){

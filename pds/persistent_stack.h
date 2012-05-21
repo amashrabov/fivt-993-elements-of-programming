@@ -7,34 +7,34 @@
 namespace pds{
 
 template<class T>
-class node{
+class stack_node{
 
-	typedef std::shared_ptr<const node<T>> const_node_ptr;
+	typedef std::shared_ptr<const stack_node<T>> const_stack_node_ptr;
 
-	const_node_ptr prev; 
+	const_stack_node_ptr prev; 
 	T value;
 
 public:
 
-	node(const T& val, const_node_ptr p): 
+	stack_node(const T& val, const_stack_node_ptr p): 
 	  value(val), prev(p) {};
 
 	const T& get_value() const{
 		return value;
 	}
 
-	const_node_ptr get_previous() const{
+	const_stack_node_ptr get_previous() const{
 		return prev;
 	}
 
-}; // class node
+}; // class stack_node
 
 template<class T>
 class persistent_stack{
 	
-	typedef std::shared_ptr<const node<T>> const_node_ptr;
+	typedef std::shared_ptr<const stack_node<T>> const_stack_node_ptr;
 	
-	const_node_ptr _top;
+	const_stack_node_ptr _top;
 	size_t _size;
 
 public:
@@ -44,7 +44,7 @@ public:
 
 	void push(const T& value){
 		_size++;
-		const_node_ptr new_top(new node<T>(value, _top));
+		const_stack_node_ptr new_top(new stack_node<T>(value, _top));
 		_top = new_top;
 	}
 

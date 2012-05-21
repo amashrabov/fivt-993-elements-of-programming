@@ -4,6 +4,7 @@ include_directories(${CMAKE_SOURCE_DIR}/stlext)
 include_directories(${CMAKE_SOURCE_DIR}/pds)
 
 set (TESTS
+  stack_tests.cpp
   fenwick_tree_test.cpp
   static_rmq_test.cpp
   static_rsq_test.cpp
@@ -16,7 +17,6 @@ set (TESTS
   persistent_heap_test.cpp
   persistent_heap_multithreaded_test.cpp
   adviced_search_test.cpp
-  stack_tests.cpp
   persistent_trie_test.cpp
   persistent_trie_multithreaded_test.cpp
   avl_set_test.cpp
