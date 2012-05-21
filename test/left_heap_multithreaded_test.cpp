@@ -89,7 +89,7 @@ TEST(left_heap_multitheaded, 10_threads) {
   std::vector<left_heap_checker> checkers(10);
   for (int i = 0; i < 10; ++i) {
     checkers[i] = checker;
-    threads[i] = std::thread(checkers[i], 1000000, i);
+    threads[i] = std::thread(checkers[i], 100000, i);
   }
   for (int i = 0; i < 10; ++i) {
     threads[i].join();
