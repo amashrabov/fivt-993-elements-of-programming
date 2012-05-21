@@ -6,7 +6,7 @@
 #include <cstdlib>
 #include <thread>
 
-#include "persistent_seg_tree.h"
+#include "segment_tree.h"
 #include "simple_seg_tree.h"
 
 namespace pds {

@@ -3,18 +3,28 @@
 
 #include <memory>
 #include <functional>
-#include "avl_tree_node.h"
+#include "pds_ptr.h"
 
 namespace pds {
-
 
 template<class T, class Comparator = std::less<T> >
 class avl_set {
  public:
 
-  typedef avl_tree_node<T> node_t;
-  typedef typename node_t::node_ptr   node_ptr;
-  typedef typename node_t::const_node_ptr const_node_ptr;
+  // Represents a node of the tree
+  struct node_t {
+    node_t(const T& value):
+      value_(value),
+      height_(1) {}
+
+
+    int height_;
+    T value_;
+    pds_ptr<node_t> child_[2];
+  };
+
+  typedef node_t* node_ptr;
+  typedef pds_ptr<node_t> const_node_ptr;
   enum direction {LEFT, RIGHT};
 
   avl_set(): 
