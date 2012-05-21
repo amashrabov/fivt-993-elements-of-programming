@@ -17,6 +17,7 @@ class pds_ptr: public std::shared_ptr<const Node> {
   }
 
   Node* switch_to_mutable() {
+    if (!this->get()) return nullptr;
     if (this->unique()) {
       return const_cast<Node*>((this->get()));
     } else {
